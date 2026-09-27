@@ -1,0 +1,1997 @@
+{
+  "schema_version": 1,
+  "catalog_id": "smells-core",
+  "catalog_version": "1.0.0",
+  "source_manifest": "smells-sources@1.0.0",
+  "item_count": 36,
+  "concepts": [
+    {
+      "id": "long-method",
+      "catalog_state": "accepted",
+      "summary": "A callable concentrates enough behavior or control flow that its responsibilities become difficult to understand and change independently.",
+      "aliases": [
+        {
+          "name": "Long Function",
+          "source_ids": [
+            "fowler-refactoring-2e"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Long Method",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Long Method (definition begins on printed page 76)",
+          "ordinal": 2,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Long Function",
+          "relationship": "refines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=3",
+          "source_locator": "Chapter 3 — Long Function; printed p. 73; PDF p. 95; InformIT page 3 of 24",
+          "ordinal": 3,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Long Method",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/long-method",
+          "source_locator": "Bloaters — Long Method",
+          "source_category": "Bloaters",
+          "ordinal": 1,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Long Method",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Bloaters — Long Method",
+          "source_category": "Bloaters",
+          "ordinal": 1,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "large-class",
+      "catalog_state": "accepted",
+      "summary": "A class or type accumulates an unusually broad state or behavior surface that may contain several responsibilities.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Large Class",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Large Class (definition begins on printed page 78)",
+          "ordinal": 3,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Large Class",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=20",
+          "source_locator": "Chapter 3 — Large Class; printed p. 82; PDF p. 104; InformIT page 20 of 24",
+          "ordinal": 20,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Large Class",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/large-class",
+          "source_locator": "Bloaters — Large Class",
+          "source_category": "Bloaters",
+          "ordinal": 2,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Large Class",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Bloaters — Large Class",
+          "source_category": "Bloaters",
+          "ordinal": 2,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "primitive-obsession",
+      "catalog_state": "accepted",
+      "summary": "Raw primitive values are used where domain-specific values or types could preserve meaning, validation, or invariants.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Primitive Obsession",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Primitive Obsession (definition begins on printed page 81)",
+          "ordinal": 9,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Primitive Obsession",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=11",
+          "source_locator": "Chapter 3 — Primitive Obsession; printed p. 78; PDF p. 100; InformIT page 11 of 24",
+          "ordinal": 11,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Primitive Obsession",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/primitive-obsession",
+          "source_locator": "Bloaters — Primitive Obsession",
+          "source_category": "Bloaters",
+          "ordinal": 3,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Primitive Obsession",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Bloaters — Primitive Obsession",
+          "source_category": "Bloaters",
+          "ordinal": 3,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "long-parameter-list",
+      "catalog_state": "accepted",
+      "summary": "A callable requires many independent inputs, making call sites harder to understand and suggesting missing cohesive values or mixed responsibilities.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Long Parameter List",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Long Parameter List (definition begins on printed page 78)",
+          "ordinal": 4,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Long Parameter List",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=4",
+          "source_locator": "Chapter 3 — Long Parameter List; printed p. 74; PDF p. 96; InformIT page 4 of 24",
+          "ordinal": 4,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Long Parameter List",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/long-parameter-list",
+          "source_locator": "Bloaters — Long Parameter List",
+          "source_category": "Bloaters",
+          "ordinal": 4,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Long Parameter List",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Bloaters — Long Parameter List",
+          "source_category": "Bloaters",
+          "ordinal": 4,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "data-clumps",
+      "catalog_state": "accepted",
+      "summary": "The same group of values repeatedly travels together across declarations or calls and may represent a missing concept.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Data Clumps",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Data Clumps (definition begins on printed page 81)",
+          "ordinal": 8,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Data Clumps",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=10",
+          "source_locator": "Chapter 3 — Data Clumps; printed p. 78; PDF p. 100; InformIT page 10 of 24",
+          "ordinal": 10,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Data Clumps",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/data-clumps",
+          "source_locator": "Bloaters — Data Clumps",
+          "source_category": "Bloaters",
+          "ordinal": 5,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Data Clumps",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Bloaters — Data Clumps",
+          "source_category": "Bloaters",
+          "ordinal": 5,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "alternative-classes-with-different-interfaces",
+      "catalog_state": "accepted",
+      "summary": "Classes provide substantially similar behavior through incompatible interfaces, preventing straightforward substitution or reuse.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Alternative Classes with Different Interfaces",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Alternative Classes with Different Interfaces (definition begins on printed page 85)",
+          "ordinal": 18,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Alternative Classes with Different Interfaces",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=21",
+          "source_locator": "Chapter 3 — Alternative Classes with Different Interfaces; printed p. 83; PDF p. 105; InformIT page 21 of 24",
+          "ordinal": 21,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Alternative Classes with Different Interfaces",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/alternative-classes-with-different-interfaces",
+          "source_locator": "Object-Orientation Abusers — Alternative Classes with Different Interfaces",
+          "source_category": "Object-Orientation Abusers",
+          "ordinal": 6,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Alternative Classes with Different Interfaces",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Alternative Classes with Different Interfaces",
+          "source_category": "Object-Orientation Abusers",
+          "ordinal": 9,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "refused-bequest",
+      "catalog_state": "accepted",
+      "summary": "A subtype rejects or uses too little of the meaningful behavior inherited from its parent.",
+      "aliases": [
+        {
+          "name": "Refused Parent Bequest",
+          "source_ids": [
+            "lanza-marinescu-2006"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Refused Bequest",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Refused Bequest (definition begins on printed page 87)",
+          "ordinal": 21,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Refused Bequest",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=23",
+          "source_locator": "Chapter 3 — Refused Bequest; printed p. 83; PDF p. 105; InformIT page 23 of 24",
+          "ordinal": 23,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Refused Bequest",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/refused-bequest",
+          "source_locator": "Object-Orientation Abusers — Refused Bequest",
+          "source_category": "Object-Orientation Abusers",
+          "ordinal": 7,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Refused Bequest",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Refused Bequest",
+          "source_category": "Object-Orientation Abusers",
+          "ordinal": 8,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        },
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Refused Parent Bequest",
+          "relationship": "refines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_7",
+          "source_locator": "Classification Disharmonies — Refused Parent Bequest",
+          "source_category": "Classification",
+          "ordinal": 10,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "not_applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "switch-statements",
+      "catalog_state": "accepted",
+      "summary": "Equivalent conditional dispatch over the same variants is repeated across the codebase and scatters variant-specific behavior.",
+      "aliases": [
+        {
+          "name": "Repeated Switches",
+          "source_ids": [
+            "fowler-refactoring-2e"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Switch Statements",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Switch Statements (definition begins on printed page 82)",
+          "ordinal": 10,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Repeated Switches",
+          "relationship": "refines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=12",
+          "source_locator": "Chapter 3 — Repeated Switches; printed p. 79; PDF p. 101; InformIT page 12 of 24",
+          "ordinal": 12,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Switch Statements",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/switch-statements",
+          "source_locator": "Object-Orientation Abusers — Switch Statements",
+          "source_category": "Object-Orientation Abusers",
+          "ordinal": 8,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Switch Statements",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Switch Statements",
+          "source_category": "Object-Orientation Abusers",
+          "ordinal": 6,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "temporary-field",
+      "catalog_state": "accepted",
+      "summary": "An object's fields are meaningful only during part of its lifecycle, creating partial states or hidden temporal coupling.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Temporary Field",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Temporary Field (definition begins on printed page 84)",
+          "ordinal": 14,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Temporary Field",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=16",
+          "source_locator": "Chapter 3 — Temporary Field; printed p. 80; PDF p. 102; InformIT page 16 of 24",
+          "ordinal": 16,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Temporary Field",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/temporary-field",
+          "source_locator": "Object-Orientation Abusers — Temporary Field",
+          "source_category": "Object-Orientation Abusers",
+          "ordinal": 9,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Temporary Field",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Temporary Field",
+          "source_category": "Object-Orientation Abusers",
+          "ordinal": 7,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "divergent-change",
+      "catalog_state": "accepted",
+      "summary": "One module changes for several unrelated reasons, indicating that distinct responsibilities may have been combined.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Divergent Change",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Divergent Change (definition begins on printed page 79)",
+          "ordinal": 5,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Divergent Change",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=7",
+          "source_locator": "Chapter 3 — Divergent Change; printed p. 76; PDF p. 98; InformIT page 7 of 24",
+          "ordinal": 7,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Divergent Change",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/divergent-change",
+          "source_locator": "Change Preventers — Divergent Change",
+          "source_category": "Change Preventers",
+          "ordinal": 10,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Divergent Change",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Change Preventers — Divergent Change",
+          "source_category": "Change Preventers",
+          "ordinal": 11,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "parallel-inheritance-hierarchies",
+      "catalog_state": "accepted",
+      "summary": "Adding a subtype in one hierarchy repeatedly requires a corresponding subtype in another hierarchy.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Parallel Inheritance Hierarchies",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Parallel Inheritance Hierarchies (definition begins on printed page 83)",
+          "ordinal": 11,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Parallel Inheritance Hierarchies",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/parallel-inheritance-hierarchies",
+          "source_locator": "Change Preventers — Parallel Inheritance Hierarchies",
+          "source_category": "Change Preventers",
+          "ordinal": 11,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Parallel Inheritance Hierarchies",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Parallel Inheritance Hierarchies",
+          "source_category": "Object-Orientation Abusers",
+          "ordinal": 10,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "not_applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "shotgun-surgery",
+      "catalog_state": "accepted",
+      "summary": "One conceptual change requires small coordinated edits across many modules or owners.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Shotgun Surgery",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Shotgun Surgery (definition begins on printed page 80)",
+          "ordinal": 6,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Shotgun Surgery",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=8",
+          "source_locator": "Chapter 3 — Shotgun Surgery; printed p. 76; PDF p. 98; InformIT page 8 of 24",
+          "ordinal": 8,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Shotgun Surgery",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/shotgun-surgery",
+          "source_locator": "Change Preventers — Shotgun Surgery",
+          "source_category": "Change Preventers",
+          "ordinal": 12,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Shotgun Surgery",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Change Preventers — Shotgun Surgery",
+          "source_category": "Change Preventers",
+          "ordinal": 12,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        },
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Shotgun Surgery",
+          "relationship": "refines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_6",
+          "source_locator": "Collaboration Disharmonies — Shotgun Surgery",
+          "source_category": "Collaboration",
+          "ordinal": 9,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "comments",
+      "catalog_state": "accepted",
+      "summary": "Explanatory comments may be compensating for code whose intent or structure is difficult to express directly, while rationale comments can remain valuable.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Comments",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Comments (definition begins on printed page 87)",
+          "ordinal": 22,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Comments",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=24",
+          "source_locator": "Chapter 3 — Comments; printed p. 84; PDF p. 106; InformIT page 24 of 24",
+          "ordinal": 24,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Comments",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/comments",
+          "source_locator": "Dispensables — Comments",
+          "source_category": "Dispensables",
+          "ordinal": 13,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Comments",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Others — Comments",
+          "source_category": "Others",
+          "ordinal": 23,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "duplicate-code",
+      "catalog_state": "accepted",
+      "summary": "Equivalent or near-equivalent behavior exists in several places and may drift or require parallel maintenance.",
+      "aliases": [
+        {
+          "name": "Duplicated Code",
+          "source_ids": [
+            "fowler-beck-refactoring-1e",
+            "fowler-refactoring-2e"
+          ]
+        },
+        {
+          "name": "Significant Duplication",
+          "source_ids": [
+            "lanza-marinescu-2006"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Duplicated Code",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Duplicated Code (definition begins on printed page 76)",
+          "ordinal": 1,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Duplicated Code",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=2",
+          "source_locator": "Chapter 3 — Duplicated Code; printed p. 72; PDF p. 94; InformIT page 2 of 24",
+          "ordinal": 2,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Duplicate Code",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/duplicate-code",
+          "source_locator": "Dispensables — Duplicate Code",
+          "source_category": "Dispensables",
+          "ordinal": 14,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Duplicate Code",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Dispensables — Duplicate Code",
+          "source_category": "Dispensables",
+          "ordinal": 15,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        },
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Significant Duplication",
+          "relationship": "refines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_5",
+          "source_locator": "Identity Disharmonies — Significant Duplication",
+          "source_category": "Identity",
+          "ordinal": 6,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "data-class",
+      "catalog_state": "accepted",
+      "summary": "A data-holding type exposes state while behavior and invariants that may belong with that state are scattered among consumers.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Data Class",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Data Class (definition begins on printed page 86)",
+          "ordinal": 20,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Data Class",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=22",
+          "source_locator": "Chapter 3 — Data Class; printed p. 83; PDF p. 105; InformIT page 22 of 24",
+          "ordinal": 22,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Data Class",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/data-class",
+          "source_locator": "Dispensables — Data Class",
+          "source_category": "Dispensables",
+          "ordinal": 15,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Data Class",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Dispensables — Data Class",
+          "source_category": "Dispensables",
+          "ordinal": 14,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        },
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Data Class",
+          "relationship": "refines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_5",
+          "source_locator": "Identity Disharmonies — Data Class",
+          "source_category": "Identity",
+          "ordinal": 3,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "dead-code",
+      "catalog_state": "accepted",
+      "summary": "Code remains in the repository even though it is no longer reachable, referenced, or needed in the measured scope.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Dead Code",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/dead-code",
+          "source_locator": "Dispensables — Dead Code",
+          "source_category": "Dispensables",
+          "ordinal": 16,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Dead Code",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Dispensables — Dead Code",
+          "source_category": "Dispensables",
+          "ordinal": 17,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "lazy-class",
+      "catalog_state": "accepted",
+      "summary": "An abstraction adds navigation or maintenance cost without providing enough behavior, invariant, type-safety, or architectural leverage.",
+      "aliases": [
+        {
+          "name": "Lazy Element",
+          "source_ids": [
+            "fowler-refactoring-2e"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Lazy Class",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Lazy Class (definition begins on printed page 83)",
+          "ordinal": 12,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Lazy Element",
+          "relationship": "refines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=14",
+          "source_locator": "Chapter 3 — Lazy Element; printed p. 80; PDF p. 102; InformIT page 14 of 24",
+          "ordinal": 14,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Lazy Class",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/lazy-class",
+          "source_locator": "Dispensables — Lazy Class",
+          "source_category": "Dispensables",
+          "ordinal": 17,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Lazy Class",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Dispensables — Lazy Class",
+          "source_category": "Dispensables",
+          "ordinal": 13,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "speculative-generality",
+      "catalog_state": "accepted",
+      "summary": "Unused abstraction or extension machinery exists for anticipated requirements that have not materialized.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Speculative Generality",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Speculative Generality (definition begins on printed page 83)",
+          "ordinal": 13,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Speculative Generality",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=15",
+          "source_locator": "Chapter 3 — Speculative Generality; printed p. 80; PDF p. 102; InformIT page 15 of 24",
+          "ordinal": 15,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Speculative Generality",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/speculative-generality",
+          "source_locator": "Dispensables — Speculative Generality",
+          "source_category": "Dispensables",
+          "ordinal": 18,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Speculative Generality",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Dispensables — Speculative Generality",
+          "source_category": "Dispensables",
+          "ordinal": 16,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "feature-envy",
+      "catalog_state": "accepted",
+      "summary": "A callable relies more heavily on another owner’s data or behavior than on its own natural context.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Feature Envy",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Feature Envy (definition begins on printed page 80)",
+          "ordinal": 7,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Feature Envy",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=9",
+          "source_locator": "Chapter 3 — Feature Envy; printed p. 77; PDF p. 99; InformIT page 9 of 24",
+          "ordinal": 9,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Feature Envy",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/feature-envy",
+          "source_locator": "Couplers — Feature Envy",
+          "source_category": "Couplers",
+          "ordinal": 19,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Feature Envy",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Couplers — Feature Envy",
+          "source_category": "Couplers",
+          "ordinal": 20,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        },
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Feature Envy",
+          "relationship": "refines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_5",
+          "source_locator": "Identity Disharmonies — Feature Envy",
+          "source_category": "Identity",
+          "ordinal": 2,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "inappropriate-intimacy",
+      "catalog_state": "accepted",
+      "summary": "Modules or types depend excessively on each other's internal details or unstable implementation knowledge.",
+      "aliases": [
+        {
+          "name": "Insider Trading",
+          "source_ids": [
+            "fowler-refactoring-2e"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Inappropriate Intimacy",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Inappropriate Intimacy (definition begins on printed page 85)",
+          "ordinal": 17,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Insider Trading",
+          "relationship": "refines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=19",
+          "source_locator": "Chapter 3 — Insider Trading; printed p. 82; PDF p. 104; InformIT page 19 of 24",
+          "ordinal": 19,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Inappropriate Intimacy",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/inappropriate-intimacy",
+          "source_locator": "Couplers — Inappropriate Intimacy",
+          "source_category": "Couplers",
+          "ordinal": 20,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Inappropriate Intimacy",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Couplers — Inappropriate Intimacy",
+          "source_category": "Couplers",
+          "ordinal": 21,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "incomplete-library-class",
+      "catalog_state": "accepted",
+      "summary": "A library abstraction lacks a needed capability and forces repeated workarounds or unsafe extension techniques.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Incomplete Library Class",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Incomplete Library Class (definition begins on printed page 86)",
+          "ordinal": 19,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Incomplete Library Class",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/incomplete-library-class",
+          "source_locator": "Couplers — Incomplete Library Class",
+          "source_category": "Couplers",
+          "ordinal": 21,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Incomplete Library Class",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Others — Incomplete Library Class",
+          "source_category": "Others",
+          "ordinal": 22,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "message-chains",
+      "catalog_state": "accepted",
+      "summary": "A caller navigates through a long sequence of objects and becomes coupled to the structure connecting them.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Message Chains",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Message Chains (definition begins on printed page 84)",
+          "ordinal": 15,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Message Chains",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=17",
+          "source_locator": "Chapter 3 — Message Chains; printed p. 81; PDF p. 103; InformIT page 17 of 24",
+          "ordinal": 17,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Message Chains",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/message-chains",
+          "source_locator": "Couplers — Message Chains",
+          "source_category": "Couplers",
+          "ordinal": 22,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Message Chains",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Encapsulators — Message Chains",
+          "source_category": "Encapsulators",
+          "ordinal": 18,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "middle-man",
+      "catalog_state": "accepted",
+      "summary": "An abstraction primarily forwards work without adding policy, translation, stability, or other meaningful behavior.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-beck-refactoring-1e",
+          "source_term": "Middle Man",
+          "relationship": "defines",
+          "reference_url": "https://ptgmedia.pearsoncmg.com/images/9780201485677/samplepages/0201485672.pdf#page=9",
+          "source_locator": "Chapter 3 table of contents on PDF p. 9 — Middle Man (definition begins on printed page 85)",
+          "ordinal": 16,
+          "access_scope": "table_of_contents",
+          "reference_role": "catalog_inventory"
+        },
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Middle Man",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=18",
+          "source_locator": "Chapter 3 — Middle Man; printed p. 81; PDF p. 103; InformIT page 18 of 24",
+          "ordinal": 18,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "refactoring-guru-smells-web",
+          "source_term": "Middle Man",
+          "relationship": "names",
+          "reference_url": "https://refactoring.guru/smells/middle-man",
+          "source_locator": "Couplers — Middle Man",
+          "source_category": "Couplers",
+          "ordinal": 23,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        },
+        {
+          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_term": "Middle Man",
+          "relationship": "classifies",
+          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
+          "source_locator": "Section 3 taxonomy — Encapsulators — Middle Man",
+          "source_category": "Encapsulators",
+          "ordinal": 19,
+          "access_scope": "full_text",
+          "reference_role": "taxonomy"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "stable"
+        }
+      }
+    },
+    {
+      "id": "mysterious-name",
+      "name": "Mysterious Name",
+      "catalog_state": "candidate",
+      "summary": "A name does not communicate the role or intent of the element it identifies within the project's domain language.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Mysterious Name",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=1",
+          "source_locator": "Chapter 3 — Mysterious Name; printed p. 72; PDF p. 94; InformIT page 1 of 24",
+          "ordinal": 1,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "global-data",
+      "name": "Global Data",
+      "catalog_state": "candidate",
+      "summary": "Mutable state has broad repository reach or weak ownership, allowing distant readers and writers to interact implicitly.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Global Data",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=5",
+          "source_locator": "Chapter 3 — Global Data; printed p. 74; PDF p. 96; InformIT page 5 of 24",
+          "ordinal": 5,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "mutable-data",
+      "name": "Mutable Data",
+      "catalog_state": "candidate",
+      "summary": "Mutable state has enough scope, aliasing, independent writers, or duplicated derivation paths to make changes difficult to reason about.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Mutable Data",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=6",
+          "source_locator": "Chapter 3 — Mutable Data; printed p. 75; PDF p. 97; InformIT page 6 of 24",
+          "ordinal": 6,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "loops",
+      "name": "Loops",
+      "catalog_state": "candidate",
+      "summary": "Loop-oriented traversal may obscure a clearer collection pipeline in contexts where that transformation is more expressive.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "fowler-refactoring-2e",
+          "source_term": "Loops",
+          "relationship": "defines",
+          "reference_url": "https://www.informit.com/articles/article.aspx?p=2952392&seqNum=13",
+          "source_locator": "Chapter 3 — Loops; printed p. 79; PDF p. 101; InformIT page 13 of 24",
+          "ordinal": 13,
+          "access_scope": "full_text",
+          "reference_role": "concept_guidance"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "contextual",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "contextual",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "contextual",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "god-class",
+      "name": "God Class",
+      "catalog_state": "candidate",
+      "summary": "A class centralizes excessive processing and responsibility while exhibiting low cohesion and strong reliance on surrounding data providers.",
+      "aliases": [
+        {
+          "name": "Blob",
+          "source_ids": [
+            "decor-2010"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "God Class",
+          "relationship": "defines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_5",
+          "source_locator": "Identity Disharmonies — God Class",
+          "source_category": "Identity",
+          "ordinal": 1,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        },
+        {
+          "source_id": "decor-2010",
+          "source_term": "Blob",
+          "relationship": "equates",
+          "reference_url": "https://assets.ptidej.net/Publications/Documents/TSE09.doc.pdf",
+          "source_locator": "Design-smell specification — Blob",
+          "ordinal": 1,
+          "access_scope": "full_text",
+          "reference_role": "detection_method"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "contextual",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "brain-method",
+      "name": "Brain Method",
+      "catalog_state": "candidate",
+      "summary": "A method concentrates excessive size, complexity, nesting, and data manipulation into one difficult reasoning unit.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Brain Method",
+          "relationship": "defines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_5",
+          "source_locator": "Identity Disharmonies — Brain Method",
+          "source_category": "Identity",
+          "ordinal": 4,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "brain-class",
+      "name": "Brain Class",
+      "catalog_state": "candidate",
+      "summary": "A class concentrates a disproportionate amount of complex behavior, often through one or more Brain Methods.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Brain Class",
+          "relationship": "defines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_5",
+          "source_locator": "Identity Disharmonies — Brain Class",
+          "source_category": "Identity",
+          "ordinal": 5,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "contextual",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "intensive-coupling",
+      "name": "Intensive Coupling",
+      "catalog_state": "candidate",
+      "summary": "A callable performs many interactions concentrated on a small number of external providers.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Intensive Coupling",
+          "relationship": "defines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_6",
+          "source_locator": "Collaboration Disharmonies — Intensive Coupling",
+          "source_category": "Collaboration",
+          "ordinal": 7,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "dispersed-coupling",
+      "name": "Dispersed Coupling",
+      "catalog_state": "candidate",
+      "summary": "A callable coordinates substantial interactions spread across many different external providers.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Dispersed Coupling",
+          "relationship": "defines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_6",
+          "source_locator": "Collaboration Disharmonies — Dispersed Coupling",
+          "source_category": "Collaboration",
+          "ordinal": 8,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "tradition-breaker",
+      "name": "Tradition Breaker",
+      "catalog_state": "candidate",
+      "summary": "A subtype departs from its inherited role and introduces substantial behavior unrelated to the parent's established responsibility.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "lanza-marinescu-2006",
+          "source_term": "Tradition Breaker",
+          "relationship": "defines",
+          "reference_url": "https://link.springer.com/chapter/10.1007/3-540-39538-5_7",
+          "source_locator": "Classification Disharmonies — Tradition Breaker",
+          "source_category": "Classification",
+          "ordinal": 11,
+          "access_scope": "publisher_record",
+          "reference_role": "metric_detection_pattern"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "contextual",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "functional-decomposition",
+      "name": "Functional Decomposition",
+      "catalog_state": "candidate",
+      "summary": "An object-oriented design is organized as procedural control and data holders without meaningful object responsibilities or variation points.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "decor-2010",
+          "source_term": "Functional Decomposition",
+          "relationship": "defines",
+          "reference_url": "https://assets.ptidej.net/Publications/Documents/TSE09.doc.pdf",
+          "source_locator": "Design-smell specification — Functional Decomposition",
+          "ordinal": 2,
+          "access_scope": "full_text",
+          "reference_role": "detection_method"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "contextual",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "spaghetti-code",
+      "name": "Spaghetti Code",
+      "catalog_state": "candidate",
+      "summary": "Processing, mutable state, and control flow are entangled without clear responsibility or structural seams.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "decor-2010",
+          "source_term": "Spaghetti Code",
+          "relationship": "defines",
+          "reference_url": "https://assets.ptidej.net/Publications/Documents/TSE09.doc.pdf",
+          "source_locator": "Design-smell specification — Spaghetti Code",
+          "ordinal": 3,
+          "access_scope": "full_text",
+          "reference_role": "detection_method"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    },
+    {
+      "id": "swiss-army-knife",
+      "name": "Swiss Army Knife",
+      "catalog_state": "candidate",
+      "summary": "One abstraction exposes an excessively broad set of unrelated capabilities or roles.",
+      "aliases": [],
+      "references": [
+        {
+          "source_id": "decor-2010",
+          "source_term": "Swiss Army Knife",
+          "relationship": "defines",
+          "reference_url": "https://assets.ptidej.net/Publications/Documents/TSE09.doc.pdf",
+          "source_locator": "Design-smell specification — Swiss Army Knife",
+          "ordinal": 4,
+          "access_scope": "full_text",
+          "reference_role": "detection_method"
+        }
+      ],
+      "language_support": {
+        "rust": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "python": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        },
+        "typescript": {
+          "applicability": "applicable",
+          "detector_support": "none"
+        }
+      }
+    }
+  ]
+}

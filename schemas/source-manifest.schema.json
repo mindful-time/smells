@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "smells source manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_id", "manifest_version", "reviewed_on", "sources"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "manifest_id": {"const": "smells-sources"},
+    "manifest_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "reviewed_on": {"type": "string", "format": "date"},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "kind", "title", "authors", "publisher", "canonical_url", "revision", "reviewed_on", "catalog_fingerprint", "monitoring", "reuse"],
+        "properties": {
+          "source_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+          "kind": {"enum": ["book_edition", "research_paper", "live_web_catalog"]},
+          "title": {"type": "string", "minLength": 1},
+          "authors": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "contributors": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "publisher": {"type": "string", "minLength": 1},
+          "publication_year": {"type": "integer", "minimum": 1900, "maximum": 2100},
+          "edition": {"type": "string", "minLength": 1},
+          "isbn": {"type": "string", "pattern": "^[0-9]{13}$"},
+          "doi": {"type": "string", "minLength": 1},
+          "canonical_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "edition_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "revision": {"type": "string", "minLength": 1},
+          "reviewed_on": {"type": "string", "format": "date"},
+          "catalog_fingerprint": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "monitoring": {"enum": ["stable_identifier", "web_content", "manual"]},
+          "reuse": {"enum": ["cite_and_paraphrase"]}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"kind": {"const": "book_edition"}}, "required": ["kind"]},
+            "then": {"required": ["publication_year", "edition", "isbn"]}
+          },
+          {
+            "if": {"properties": {"kind": {"const": "research_paper"}}, "required": ["kind"]},
+            "then": {
+              "required": ["publication_year", "doi"],
+              "not": {"anyOf": [{"required": ["edition"]}, {"required": ["isbn"]}]}
+            }
+          },
+          {
+            "if": {"properties": {"kind": {"const": "live_web_catalog"}}, "required": ["kind"]},
+            "then": {
+              "not": {
+                "anyOf": [
+                  {"required": ["publication_year"]},
+                  {"required": ["edition"]},
+                  {"required": ["isbn"]},
+                  {"required": ["doi"]}
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

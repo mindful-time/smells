@@ -56,7 +56,7 @@ Use Smells alongside formatting, compilation, type checking, tests, coverage, se
 | `python-v1` | `.py`, `.pyi` | 28 | Classes, direct methods, and `self`/`cls` field assignments |
 | `typescript-v1` | `.ts`, `.tsx`, `.mts`, `.cts` | 28 | Classes, abstract classes, interfaces, signatures, and authored fields |
 
-All three packs cover the same 23 canonical categories. Some categories use more than one rule, which is why each pack contains 28 rules.
+All three packs cover the same 23 canonical concepts. Some concepts use more than one rule, which is why each pack contains 28 rules.
 
 | Refactoring.Guru category | Smells covered |
 | --- | --- |
@@ -65,6 +65,12 @@ All three packs cover the same 23 canonical categories. Some categories use more
 | Change Preventers | Divergent Change, Parallel Inheritance Hierarchies, Shotgun Surgery |
 | Dispensables | Comments, Duplicate Code, Data Class, Dead Code, Lazy Class, Speculative Generality |
 | Couplers | Feature Envy, Inappropriate Intimacy, Incomplete Library Class, Message Chains, Middle Man |
+
+### Concept catalog versus active checks
+
+The embedded [source manifest](rules/sources-v1.json) and [concept catalog](rules/concept-catalog-v1.json) add evidence to the existing smell identities without creating another policy system. Accepted entries are keyed by the existing policy ID instead of copying its name or category, then attach attributed aliases, per-language support states, and exact HTTPS references with source locators and access scope. The catalog currently contains 36 deduplicated concepts: the 23 supported v1 concepts plus 13 research candidates from Fowler's second edition, Lanza–Marinescu, and DECOR.
+
+Catalog presence does not mean a detector runs. The language packs above remain the executable source of truth and still expose exactly 23 concepts and 28 rules. A source taxonomy is a browsing/provenance view; policy groups independently select executable rules. New candidates require language-specific evidence contracts and preview validation before a future pack can activate them.
 
 Java, Kotlin, JavaScript, and JSX are not currently supported. React and React Native repositories can scan TypeScript and TSX, but not JavaScript, JSX, or native Android source.
 

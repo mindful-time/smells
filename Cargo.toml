@@ -13,6 +13,8 @@ categories = ["command-line-utilities", "development-tools"]
 publish = ["crates-io"]
 include = [
     "src/**",
+    "rules/sources-v1.json",
+    "rules/concept-catalog-v1.json",
     "rules/rust-v1.json",
     "rules/rust-v1-guidance.json",
     "rules/python-v1.json",
@@ -23,6 +25,8 @@ include = [
     "schemas/python-quality-policy.schema.json",
     "schemas/typescript-quality-policy.schema.json",
     "schemas/provider-evidence.schema.json",
+    "schemas/source-manifest.schema.json",
+    "schemas/concept-catalog.schema.json",
     "examples/quality-policy.json",
     "examples/python-quality-policy.json",
     "examples/typescript-quality-policy.json",
@@ -53,3 +57,6 @@ tree-sitter-python = "=0.25.0"
 tree-sitter-typescript = "=0.23.2"
 # The lexer requires the same Unicode 17 tables as unicode-properties 0.1.4.
 unicode-ident = "=1.0.24"
+
+[dev-dependencies]
+jsonschema = { version = "0.58.1", default-features = false }
