@@ -17,12 +17,15 @@ for required in \
     docs/typescript-rule-contracts.md docs/report-interface.md \
     docs/provider-evidence.md examples/quality-policy.json \
     examples/python-quality-policy.json examples/typescript-quality-policy.json \
+    rules/sources-v1.json rules/concept-catalog-v1.json \
     rules/rust-v1.json rules/python-v1.json rules/typescript-v1.json \
     rules/rust-v1-guidance.json rules/portable-v1-guidance.json \
     schemas/quality-policy.schema.json \
     schemas/python-quality-policy.schema.json \
     schemas/typescript-quality-policy.schema.json \
-    schemas/provider-evidence.schema.json src/main.rs
+    schemas/provider-evidence.schema.json \
+    schemas/source-manifest.schema.json \
+    schemas/concept-catalog.schema.json src/main.rs
 do
     grep -Fx "$required" "$files" >/dev/null
 done

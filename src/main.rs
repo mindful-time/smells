@@ -1,3 +1,4 @@
+mod catalog;
 mod collectors;
 mod evidence;
 mod evidence_evaluators;
