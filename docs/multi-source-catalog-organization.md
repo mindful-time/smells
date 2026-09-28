@@ -9,7 +9,8 @@ Lanza–Marinescu, and DECOR into one flat list of warnings. They play different
 roles:
 
 - Fowler and Refactoring.Guru name and explain conceptual smells.
-- Mäntylä contributes taxonomy history and Dead Code.
+- Mäntylä and Lassenius contribute the current six-category taxonomy, Dead
+  Code, and evidence about the subjectivity of smell evaluation.
 - Lanza and Marinescu contribute metric-oriented design disharmonies.
 - DECOR contributes a method for composing lower-level evidence into
   higher-level design-smell detectors.
@@ -96,7 +97,7 @@ language detector contract.
 | --- | --- | --- |
 | Fowler 1e/2e | Concept lineage, current names, review direction | Do not convert prose into universal thresholds. |
 | Refactoring.Guru | Accessible catalog and current v1 presentation | Do not keep it as the sole provenance source. |
-| Mäntylä 2003 | Taxonomy history and Dead Code provenance | Do not make its categories the only ontology. |
+| Mäntylä–Lassenius 2006 | Current Mäntylä taxonomy, Dead Code provenance, and empirical evidence about subjective evaluation | Do not turn its categories or metrics into universal detector truth. |
 | Lanza–Marinescu | Composite metric hypotheses | Do not transplant OO thresholds unchanged across languages. |
 | DECOR/DETEX | Evidence-composition and validation method | Do not flatten evidence terms into standalone warnings. |
 
@@ -118,7 +119,7 @@ A source record identifies a work or edition, not a smell. Use immutable IDs:
 - `fowler-beck-refactoring-1e`
 - `fowler-refactoring-2e`
 - `refactoring-guru-smells-web`
-- `mantyla-vanhanen-lassenius-2003`
+- `mantyla-lassenius-2006`
 - `lanza-marinescu-2006`
 - `decor-2010`
 
@@ -126,7 +127,7 @@ Minimum fields:
 
 - ID, title, authors, publisher, and kind;
 - edition, publication date, ISBN, or DOI where applicable;
-- canonical URL;
+- canonical URL and, when available, one direct `full_text_url`;
 - date last reviewed by maintainers;
 - reviewed revision/fingerprint;
 - monitoring mode: `stable_identifier`, `web_content`, or `manual`;
@@ -319,7 +320,7 @@ The two new files can start with this minimal shape:
 {
   "schema_version": 1,
   "manifest_id": "smells-sources",
-  "manifest_version": "1.0.0",
+  "manifest_version": "1.1.0",
   "reviewed_on": "2026-09-27",
   "sources": [
     {
@@ -348,8 +349,8 @@ The two new files can start with this minimal shape:
 {
   "schema_version": 1,
   "catalog_id": "smells-core",
-  "catalog_version": "1.0.0",
-  "source_manifest": "smells-sources@1.0.0",
+  "catalog_version": "1.1.0",
+  "source_manifest": "smells-sources@1.1.0",
   "item_count": 36,
   "concepts": [
     {
@@ -603,9 +604,10 @@ stable default coverage requires `*-v2`.
   [second-edition smell chapter](https://www.informit.com/articles/article.aspx?p=2952392).
 - Refactoring.Guru, [Code Smells](https://refactoring.guru/refactoring/smells)
   and [Content Usage Policy](https://refactoring.guru/content-usage-policy).
-- Mäntylä, Vanhanen, and Lassenius,
-  [Aalto publication record](https://research.aalto.fi/en/publications/a-taxonomy-and-an-initial-empirical-study-of-bad-smells-in-code/),
-  DOI `10.1109/ICSM.2003.1235447`.
+- Mäntylä and Lassenius,
+  [Springer publication record](https://link.springer.com/article/10.1007/s10664-006-9002-8)
+  and [author-hosted full text](https://mmantyla.github.io/ESE_2006.pdf),
+  DOI `10.1007/s10664-006-9002-8`.
 - Lanza and Marinescu,
   [*Object-Oriented Metrics in Practice*](https://link.springer.com/book/10.1007/3-540-39538-5).
 - Ptidej Team, [DECOR/DETEX](https://www.ptidej.net/research/designsmells),

@@ -53,6 +53,7 @@ struct Source {
     isbn: Option<String>,
     doi: Option<String>,
     canonical_url: String,
+    full_text_url: Option<String>,
     edition_url: Option<String>,
     revision: String,
     reviewed_on: String,
@@ -242,10 +243,15 @@ fn valid_version(value: &str) -> bool {
             .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
 }
 
+fn fixed_ascii_digits(value: &str, length: usize) -> bool {
+    value.len() == length && value.bytes().all(|byte| byte.is_ascii_digit())
+}
+
 fn parse_date(value: &str) -> Option<(u32, u32, u32)> {
     let (year, remainder) = value.split_once('-')?;
     let (month, day) = remainder.split_once('-')?;
-    if year.len() != 4 || month.len() != 2 || day.len() != 2 {
+    if !fixed_ascii_digits(year, 4) || !fixed_ascii_digits(month, 2) || !fixed_ascii_digits(day, 2)
+    {
         return None;
     }
     Some((year.parse().ok()?, month.parse().ok()?, day.parse().ok()?))
@@ -367,6 +373,10 @@ fn valid_source_identity(source: &Source) -> bool {
 fn valid_source_location_and_review(source: &Source, manifest_reviewed_on: &str) -> bool {
     valid_https_url(&source.canonical_url)
         && source
+            .full_text_url
+            .as_ref()
+            .is_none_or(|url| valid_https_url(url))
+        && source
             .edition_url
             .as_ref()
             .is_none_or(|url| valid_https_url(url))
@@ -461,17 +471,6 @@ fn valid_concept_catalog_header(catalog: &ConceptCatalog) -> bool {
         && catalog.concepts.len() == catalog.item_count
 }
 
-fn canonical_name<'a>(
-    concept: &'a Concept,
-    policy_smell: Option<&'a crate::policy::Smell>,
-) -> Option<&'a str> {
-    if concept.catalog_state == CatalogState::Accepted {
-        policy_smell.map(|smell| smell.name.as_str())
-    } else {
-        concept.name.as_deref()
-    }
-}
-
 fn valid_concept_metadata(concept: &Concept, canonical_name: Option<&str>) -> bool {
     valid_identifier(&concept.id)
         && canonical_name.is_some_and(|name| !name.trim().is_empty())
@@ -546,14 +545,18 @@ fn valid_lifecycle_counts(states: &BTreeMap<CatalogState, usize>) -> bool {
 fn validate_concept<'a>(
     concept: &'a Concept,
     source_ids: &BTreeSet<&str>,
-    registry: &'a Registry,
+    registry: &Registry,
     concept_ids: &mut BTreeSet<&'a str>,
     labels: &mut BTreeMap<String, String>,
     states: &mut BTreeMap<CatalogState, usize>,
     represented_sources: &mut BTreeSet<&'a str>,
 ) -> Result<(), String> {
     let policy_smell = registry.smells.iter().find(|smell| smell.id == concept.id);
-    let canonical_name = canonical_name(concept, policy_smell);
+    let canonical_name = if concept.catalog_state == CatalogState::Accepted {
+        policy_smell.map(|smell| smell.name.as_str())
+    } else {
+        concept.name.as_deref()
+    };
     if !concept_ids.insert(concept.id.as_str()) || !valid_concept_metadata(concept, canonical_name)
     {
         return Err(format!("invalid embedded concept: {}", concept.id));
@@ -569,7 +572,7 @@ fn validate_concept<'a>(
 fn validate_concepts<'a>(
     catalog: &'a ConceptCatalog,
     source_ids: &BTreeSet<&str>,
-    registry: &'a Registry,
+    registry: &Registry,
 ) -> Result<BTreeSet<&'a str>, String> {
     if !valid_concept_catalog_header(catalog) {
         return Err("invalid embedded concept catalog header".into());
@@ -686,7 +689,7 @@ fn validate_reference_inventories(
         ("fowler-beck-refactoring-1e", 22),
         ("fowler-refactoring-2e", 24),
         ("refactoring-guru-smells-web", 23),
-        ("mantyla-vanhanen-lassenius-2003", 23),
+        ("mantyla-lassenius-2006", 23),
         ("lanza-marinescu-2006", 11),
         ("decor-2010", 4),
     ]);
@@ -842,6 +845,10 @@ mod tests {
         let (mut sources, _) = parse().unwrap();
         sources.sources[1].edition_url = Some("https://".into());
         assert!(validate_sources(&sources).is_err());
+
+        let (mut sources, _) = parse().unwrap();
+        sources.sources[3].full_text_url = Some("https://".into());
+        assert!(validate_sources(&sources).is_err());
     }
 
     #[test]
@@ -859,6 +866,8 @@ mod tests {
             "2026-01-00",
             "2026-1-01",
             "2026/01/01",
+            "+026-01-01",
+            "2026-+1-+1",
             "date-value",
         ] {
             assert!(!valid_date(invalid), "expected invalid date: {invalid}");
@@ -922,6 +931,81 @@ mod tests {
     fn source_reference_counts_preserve_the_published_inventories() {
         let (sources, catalog) = parse().unwrap();
         validate_reference_inventories(&catalog, &sources).unwrap();
+    }
+
+    #[test]
+    fn mantyla_2006_is_the_only_mantyla_source_and_keeps_all_23_smells() {
+        let (sources, catalog) = parse().unwrap();
+        let mantyla_sources = sources
+            .sources
+            .iter()
+            .filter(|source| {
+                source
+                    .authors
+                    .iter()
+                    .any(|author| author.contains("Mäntylä"))
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(mantyla_sources.len(), 1);
+        assert_eq!(mantyla_sources[0].source_id, "mantyla-lassenius-2006");
+        assert_eq!(
+            mantyla_sources[0].full_text_url.as_deref(),
+            Some("https://mmantyla.github.io/ESE_2006.pdf")
+        );
+
+        let references = catalog
+            .concepts
+            .iter()
+            .flat_map(|concept| &concept.references)
+            .filter(|reference| reference.source_id == "mantyla-lassenius-2006")
+            .collect::<Vec<_>>();
+        assert_eq!(references.len(), 23);
+        assert!(references.iter().all(|reference| {
+            reference
+                .reference_url
+                .starts_with("https://mmantyla.github.io/ESE_2006.pdf#page=")
+        }));
+
+        for (term, category, ordinal) in [
+            ("Parallel Inheritance Hierarchies", "Change Preventers", 12),
+            ("Message Chains", "Couplers", 20),
+            ("Middle Man", "Couplers", 21),
+            ("Comments", "Other smells (ungrouped)", 22),
+            ("Incomplete Library Class", "Other smells (ungrouped)", 23),
+        ] {
+            let reference = references
+                .iter()
+                .find(|reference| reference.source_term == term)
+                .unwrap();
+            assert_eq!(reference.source_category.as_deref(), Some(category));
+            assert_eq!(reference.ordinal, ordinal);
+        }
+    }
+
+    #[test]
+    fn decor_uses_hal_for_open_full_text_and_claim_evidence() {
+        let (sources, catalog) = parse().unwrap();
+        let source = sources
+            .sources
+            .iter()
+            .find(|source| source.source_id == "decor-2010")
+            .unwrap();
+        assert_eq!(
+            source.full_text_url.as_deref(),
+            Some("https://inria.hal.science/inria-00538476/document")
+        );
+
+        let references = catalog
+            .concepts
+            .iter()
+            .flat_map(|concept| &concept.references)
+            .filter(|reference| reference.source_id == "decor-2010")
+            .collect::<Vec<_>>();
+        assert_eq!(references.len(), 4);
+        assert!(references.iter().all(|reference| {
+            reference.reference_url == "https://inria.hal.science/inria-00538476/document#page=6"
+                && reference.source_locator.contains("§4.1.2, Table 1")
+        }));
     }
 
     #[test]
@@ -1009,6 +1093,10 @@ mod tests {
             .unwrap();
         let mut invalid = serde_json::from_str::<serde_json::Value>(SOURCE_MANIFEST_JSON).unwrap();
         invalid["reviewed_on"] = "2026-99-99".into();
+        assert!(!validator.is_valid(&invalid));
+
+        let mut invalid = serde_json::from_str::<serde_json::Value>(SOURCE_MANIFEST_JSON).unwrap();
+        invalid["sources"][3]["full_text_url"] = "http://example.com/paper.pdf".into();
         assert!(!validator.is_valid(&invalid));
 
         let mut incomplete =

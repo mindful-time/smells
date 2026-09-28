@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "manifest_id": "smells-sources",
-  "manifest_version": "1.0.0",
+  "manifest_version": "1.1.0",
   "reviewed_on": "2026-09-27",
   "sources": [
     {
@@ -53,17 +53,18 @@
       "reuse": "cite_and_paraphrase"
     },
     {
-      "source_id": "mantyla-vanhanen-lassenius-2003",
+      "source_id": "mantyla-lassenius-2006",
       "kind": "research_paper",
-      "title": "A Taxonomy and an Initial Empirical Study of Bad Smells in Code",
-      "authors": ["Mika V. Mäntylä", "Jari Vanhanen", "Casper Lassenius"],
-      "publisher": "IEEE",
-      "publication_year": 2003,
-      "doi": "10.1109/ICSM.2003.1235447",
-      "canonical_url": "https://research.aalto.fi/en/publications/a-taxonomy-and-an-initial-empirical-study-of-bad-smells-in-code/",
-      "revision": "doi:10.1109/ICSM.2003.1235447",
+      "title": "Subjective Evaluation of Software Evolvability Using Code Smells: An Empirical Study",
+      "authors": ["Mika V. Mäntylä", "Casper Lassenius"],
+      "publisher": "Springer",
+      "publication_year": 2006,
+      "doi": "10.1007/s10664-006-9002-8",
+      "canonical_url": "https://link.springer.com/article/10.1007/s10664-006-9002-8",
+      "full_text_url": "https://mmantyla.github.io/ESE_2006.pdf",
+      "revision": "doi:10.1007/s10664-006-9002-8",
       "reviewed_on": "2026-09-27",
-      "catalog_fingerprint": "sha256:35813c9d11c137e7853613c3396a53664bbde76705be2cb9dda7c146dc213bdd",
+      "catalog_fingerprint": "sha256:687cceccc856beb8b9fa6abc9968769cb50e83015bca02183e08a76deccbcdc3",
       "monitoring": "stable_identifier",
       "reuse": "cite_and_paraphrase"
     },
@@ -93,9 +94,10 @@
       "publication_year": 2010,
       "doi": "10.1109/TSE.2009.50",
       "canonical_url": "https://doi.org/10.1109/TSE.2009.50",
+      "full_text_url": "https://inria.hal.science/inria-00538476/document",
       "revision": "doi:10.1109/TSE.2009.50",
       "reviewed_on": "2026-09-27",
-      "catalog_fingerprint": "sha256:3dc65d377ee47caed4ed5e070d8cb3102137eb31847a4d0c3615909886469f32",
+      "catalog_fingerprint": "sha256:8a83d3f3a4018b134761024315d8e21626575f80d4a628a332e1989a3d4296cd",
       "monitoring": "stable_identifier",
       "reuse": "cite_and_paraphrase"
     }

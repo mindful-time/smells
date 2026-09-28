@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "catalog_id": "smells-core",
-  "catalog_version": "1.0.0",
-  "source_manifest": "smells-sources@1.0.0",
+  "catalog_version": "1.1.0",
+  "source_manifest": "smells-sources@1.1.0",
   "item_count": 36,
   "concepts": [
     {
@@ -50,11 +50,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Long Method",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Bloaters — Long Method",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Bloaters — Long Method; printed p. 408, PDF p. 14",
           "source_category": "Bloaters",
           "ordinal": 1,
           "access_scope": "full_text",
@@ -114,11 +114,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Large Class",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Bloaters — Large Class",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Bloaters — Large Class; printed p. 408, PDF p. 14",
           "source_category": "Bloaters",
           "ordinal": 2,
           "access_scope": "full_text",
@@ -178,11 +178,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Primitive Obsession",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Bloaters — Primitive Obsession",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Bloaters — Primitive Obsession; printed p. 408, PDF p. 14",
           "source_category": "Bloaters",
           "ordinal": 3,
           "access_scope": "full_text",
@@ -242,11 +242,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Long Parameter List",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Bloaters — Long Parameter List",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Bloaters — Long Parameter List; printed p. 408, PDF p. 14",
           "source_category": "Bloaters",
           "ordinal": 4,
           "access_scope": "full_text",
@@ -306,11 +306,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Data Clumps",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Bloaters — Data Clumps",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Bloaters — Data Clumps; printed p. 408, PDF p. 14",
           "source_category": "Bloaters",
           "ordinal": 5,
           "access_scope": "full_text",
@@ -370,11 +370,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Alternative Classes with Different Interfaces",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Alternative Classes with Different Interfaces",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Object-Orientation Abusers — Alternative Classes with Different Interfaces; printed p. 408, PDF p. 14",
           "source_category": "Object-Orientation Abusers",
           "ordinal": 9,
           "access_scope": "full_text",
@@ -441,11 +441,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Refused Bequest",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Refused Bequest",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Object-Orientation Abusers — Refused Bequest; printed p. 408, PDF p. 14",
           "source_category": "Object-Orientation Abusers",
           "ordinal": 8,
           "access_scope": "full_text",
@@ -523,11 +523,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Switch Statements",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Switch Statements",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Object-Orientation Abusers — Switch Statements; printed p. 408, PDF p. 14",
           "source_category": "Object-Orientation Abusers",
           "ordinal": 6,
           "access_scope": "full_text",
@@ -587,11 +587,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Temporary Field",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Temporary Field",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Object-Orientation Abusers — Temporary Field; printed p. 408, PDF p. 14",
           "source_category": "Object-Orientation Abusers",
           "ordinal": 7,
           "access_scope": "full_text",
@@ -651,13 +651,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Divergent Change",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Change Preventers — Divergent Change",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Change Preventers — Divergent Change; printed p. 408, PDF p. 14",
           "source_category": "Change Preventers",
-          "ordinal": 11,
+          "ordinal": 10,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         }
@@ -705,13 +705,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Parallel Inheritance Hierarchies",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Object-Orientation Abusers — Parallel Inheritance Hierarchies",
-          "source_category": "Object-Orientation Abusers",
-          "ordinal": 10,
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Change Preventers — Parallel Inheritance Hierarchies; printed p. 408, PDF p. 14",
+          "source_category": "Change Preventers",
+          "ordinal": 12,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         }
@@ -769,13 +769,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Shotgun Surgery",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Change Preventers — Shotgun Surgery",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=14",
+          "source_locator": "§3.5, Change Preventers — Shotgun Surgery; printed p. 408, PDF p. 14",
           "source_category": "Change Preventers",
-          "ordinal": 12,
+          "ordinal": 11,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         },
@@ -844,13 +844,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Comments",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Others — Comments",
-          "source_category": "Others",
-          "ordinal": 23,
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, other ungrouped smells — Comments; printed p. 409, PDF p. 15",
+          "source_category": "Other smells (ungrouped)",
+          "ordinal": 22,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         }
@@ -922,11 +922,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Duplicate Code",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Dispensables — Duplicate Code",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, Dispensables — Duplicate Code; printed p. 409, PDF p. 15",
           "source_category": "Dispensables",
           "ordinal": 15,
           "access_scope": "full_text",
@@ -997,11 +997,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Data Class",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Dispensables — Data Class",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, Dispensables — Data Class; printed p. 409, PDF p. 15",
           "source_category": "Dispensables",
           "ordinal": 14,
           "access_scope": "full_text",
@@ -1052,13 +1052,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Dead Code",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Dispensables — Dead Code",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, Dispensables — Dead Code; printed p. 409, PDF p. 15",
           "source_category": "Dispensables",
-          "ordinal": 17,
+          "ordinal": 16,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         }
@@ -1123,11 +1123,11 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Lazy Class",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Dispensables — Lazy Class",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, Dispensables — Lazy Class; printed p. 409, PDF p. 15",
           "source_category": "Dispensables",
           "ordinal": 13,
           "access_scope": "full_text",
@@ -1187,13 +1187,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Speculative Generality",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Dispensables — Speculative Generality",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, Dispensables — Speculative Generality; printed p. 409, PDF p. 15",
           "source_category": "Dispensables",
-          "ordinal": 16,
+          "ordinal": 17,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         }
@@ -1251,13 +1251,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Feature Envy",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Couplers — Feature Envy",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, Couplers — Feature Envy; printed p. 409, PDF p. 15",
           "source_category": "Couplers",
-          "ordinal": 20,
+          "ordinal": 18,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         },
@@ -1333,13 +1333,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Inappropriate Intimacy",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Couplers — Inappropriate Intimacy",
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, Couplers — Inappropriate Intimacy; printed p. 409, PDF p. 15",
           "source_category": "Couplers",
-          "ordinal": 21,
+          "ordinal": 19,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         }
@@ -1387,13 +1387,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Incomplete Library Class",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Others — Incomplete Library Class",
-          "source_category": "Others",
-          "ordinal": 22,
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, other ungrouped smells — Incomplete Library Class; printed p. 409, PDF p. 15",
+          "source_category": "Other smells (ungrouped)",
+          "ordinal": 23,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         }
@@ -1451,13 +1451,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Message Chains",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Encapsulators — Message Chains",
-          "source_category": "Encapsulators",
-          "ordinal": 18,
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, Couplers — Message Chains; printed p. 409, PDF p. 15",
+          "source_category": "Couplers",
+          "ordinal": 20,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         }
@@ -1515,13 +1515,13 @@
           "reference_role": "concept_guidance"
         },
         {
-          "source_id": "mantyla-vanhanen-lassenius-2003",
+          "source_id": "mantyla-lassenius-2006",
           "source_term": "Middle Man",
           "relationship": "classifies",
-          "reference_url": "https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content",
-          "source_locator": "Section 3 taxonomy — Encapsulators — Middle Man",
-          "source_category": "Encapsulators",
-          "ordinal": 19,
+          "reference_url": "https://mmantyla.github.io/ESE_2006.pdf#page=15",
+          "source_locator": "§3.5, Couplers — Middle Man; printed p. 409, PDF p. 15",
+          "source_category": "Couplers",
+          "ordinal": 21,
           "access_scope": "full_text",
           "reference_role": "taxonomy"
         }
@@ -1702,8 +1702,8 @@
           "source_id": "decor-2010",
           "source_term": "Blob",
           "relationship": "equates",
-          "reference_url": "https://assets.ptidej.net/Publications/Documents/TSE09.doc.pdf",
-          "source_locator": "Design-smell specification — Blob",
+          "reference_url": "https://inria.hal.science/inria-00538476/document#page=6",
+          "source_locator": "§4.1.2, Table 1 — Blob; printed p. 24, HAL PDF p. 6",
           "ordinal": 1,
           "access_scope": "full_text",
           "reference_role": "detection_method"
@@ -1905,8 +1905,8 @@
           "source_id": "decor-2010",
           "source_term": "Functional Decomposition",
           "relationship": "defines",
-          "reference_url": "https://assets.ptidej.net/Publications/Documents/TSE09.doc.pdf",
-          "source_locator": "Design-smell specification — Functional Decomposition",
+          "reference_url": "https://inria.hal.science/inria-00538476/document#page=6",
+          "source_locator": "§4.1.2, Table 1 — Functional Decomposition; printed p. 24, HAL PDF p. 6",
           "ordinal": 2,
           "access_scope": "full_text",
           "reference_role": "detection_method"
@@ -1938,8 +1938,8 @@
           "source_id": "decor-2010",
           "source_term": "Spaghetti Code",
           "relationship": "defines",
-          "reference_url": "https://assets.ptidej.net/Publications/Documents/TSE09.doc.pdf",
-          "source_locator": "Design-smell specification — Spaghetti Code",
+          "reference_url": "https://inria.hal.science/inria-00538476/document#page=6",
+          "source_locator": "§4.1.2, Table 1 — Spaghetti Code; printed p. 24, HAL PDF p. 6",
           "ordinal": 3,
           "access_scope": "full_text",
           "reference_role": "detection_method"
@@ -1971,8 +1971,8 @@
           "source_id": "decor-2010",
           "source_term": "Swiss Army Knife",
           "relationship": "defines",
-          "reference_url": "https://assets.ptidej.net/Publications/Documents/TSE09.doc.pdf",
-          "source_locator": "Design-smell specification — Swiss Army Knife",
+          "reference_url": "https://inria.hal.science/inria-00538476/document#page=6",
+          "source_locator": "§4.1.2, Table 1 — Swiss Army Knife; printed p. 24, HAL PDF p. 6",
           "ordinal": 4,
           "access_scope": "full_text",
           "reference_role": "detection_method"

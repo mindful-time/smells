@@ -8,8 +8,8 @@ The current Smells catalog is not missing a second large catalog hidden inside
 Mäntylä or Refactoring.Guru. The same lineage appears three times:
 
 1. Fowler and Beck's first edition of *Refactoring* defined 22 smells.
-2. Mäntylä grouped those 22 into seven categories and proposed **Dead Code** as
-   an additional smell.
+2. Mäntylä and Lassenius's complete 2006 taxonomy groups those smells into
+   five named categories, retains two ungrouped smells, and adds **Dead Code**.
 3. Refactoring.Guru exposes those 23 concepts with a simplified five-category
    presentation. Those are the exact 23 concepts pinned by every current Smells
    v1 pack.
@@ -182,34 +182,29 @@ revision evidence, and independently authored summaries—not embedded copies of
 whole pages or illustrations
 ([content usage policy](https://refactoring.guru/content-usage-policy)).
 
-## Source 3: Mäntylä, Vanhanen, and Lassenius (2003)
+## Source 3: Mäntylä and Lassenius (2006)
 
-The original paper explicitly says Fowler and Beck supplied a flat list of 22,
-then proposes a seven-category taxonomy. It separately calls out the omission of
-Dead Code, adds it to the empirical survey, and analyzes 23 smells. The paper
-describes the taxonomy as initial and subjective, not as an executable detector
-specification
-([Aalto-hosted paper](https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content),
-[publication record and DOI](https://research.aalto.fi/en/publications/a-taxonomy-and-an-initial-empirical-study-of-bad-smells-in-code/)).
+Smells catalogs only the complete 2006 peer-reviewed paper for the Mäntylä
+lineage. Section 3.5 introduces 23 smells: the 22 Fowler and Beck smells plus
+Dead Code. The authors call its organization an improved version of their
+earlier taxonomy and arrange the inventory into five named groups plus two
+ungrouped smells. The 21-item website table is not a separate source because it
+omits those two ungrouped smells
+([Springer record and DOI](https://link.springer.com/article/10.1007/s10664-006-9002-8),
+[author-hosted full text, §3.5](https://mmantyla.github.io/ESE_2006.pdf#page=13)).
 
 | Mäntylä category | Source terms | Current Smells coverage | Contribution |
 | --- | --- | --- | --- |
 | Bloaters | Long Method; Large Class; Primitive Obsession; Long Parameter List; Data Clumps | **Exact**, all five | Groups size/growth-related Fowler smells. No new term. |
-| Object-Orientation Abusers | Switch Statements; Temporary Field; Refused Bequest; Alternative Classes with Different Interfaces; Parallel Inheritance Hierarchies | **Exact**, all five | Groups incomplete/misused OO mechanisms. No new term. |
-| Change Preventers | Divergent Change; Shotgun Surgery | **Exact**, both | Relates one-class/many-change and one-change/many-class problems. No new term. |
-| Dispensables | Lazy Class; Data Class; Duplicate Code; Speculative Generality; **Dead Code** | **Exact**, all five | Dead Code is the substantive addition beyond Fowler 1e. |
-| Encapsulators | Message Chains; Middle Man | **Exact**, both | Treats the two as opposing access/encapsulation pressures. |
-| Couplers | Feature Envy; Inappropriate Intimacy | **Exact**, both | Groups two high-coupling smells. |
-| Others | Incomplete Library Class; Comments | **Exact**, both | Residual category for the two terms that did not fit the other groups. |
+| Object-Orientation Abusers | Switch Statements; Temporary Field; Refused Bequest; Alternative Classes with Different Interfaces | **Exact**, all four | Groups incomplete or misused OO mechanisms. No new term. |
+| Change Preventers | Divergent Change; Shotgun Surgery; Parallel Inheritance Hierarchies | **Exact**, all three | Relates one-class/many-change, one-change/many-class, and parallel-hierarchy problems. |
+| Dispensables | Lazy Class; Data Class; Duplicate Code; **Dead Code**; Speculative Generality | **Exact**, all five | Dead Code is the substantive addition beyond Fowler 1e. |
+| Couplers | Feature Envy; Inappropriate Intimacy; Message Chains; Middle Man | **Exact**, all four | Groups excessive coupling and delegation problems. |
+| Other smells (ungrouped) | Comments; Incomplete Library Class | **Exact**, both | The paper retains both smells but states that they do not fit a named group. |
 
-Refactoring.Guru changes the grouping: it has no Encapsulators or Others
-category, moves Parallel Inheritance Hierarchies to Change Preventers, and places
-Message Chains and Middle Man under Couplers. This is a taxonomy difference,
-not evidence of additional or removed smell concepts.
+Mäntylä and Lassenius therefore contribute:
 
-Mäntylä therefore contributes:
-
-1. provenance for the seven-category taxonomy;
+1. one current, complete 23-smell taxonomy view;
 2. the Dead Code addition;
 3. empirical evidence that human smell judgments are correlated and subjective;
 4. a warning not to treat categories or thresholds as immutable truth.
@@ -522,7 +517,7 @@ Use the sources in distinct roles:
 | Fowler 2e and official Fowler material | Current conceptual catalog, aliases, rationale, refactoring direction | Do not convert prose into universal thresholds. |
 | Fowler 1e | Legacy provenance for current concepts omitted or renamed in 2e | Do not treat legacy and successor names as duplicate smells. |
 | Refactoring.Guru | Accessible explanatory reference and current v1 provenance | Do not embed substantial page copies or treat it as the only authority. |
-| Mäntylä 2003 | Taxonomy history, Dead Code provenance, evidence of subjective human judgment | Do not present the seven categories as the only canonical ontology. |
+| Mäntylä–Lassenius 2006 | Current taxonomy, Dead Code provenance, evidence of subjective human judgment | Do not present its categories as the only canonical ontology. |
 | Lanza and Marinescu | Composite OO metric hypotheses and detector-design evidence | Do not transplant thresholds or OO assumptions unchanged across languages. |
 | DECOR | Method for composing measurable, structural, and lexical evidence into auditable design-smell detectors | Do not flatten constituent signals into independent warnings. |
 
@@ -557,9 +552,9 @@ Use the sources in distinct roles:
 | Fowler and Beck, *Refactoring*, 2e | [Official InformIT chapter](https://www.informit.com/articles/article.aspx?p=2952392) and [book record](https://www.informit.com/store/refactoring-improving-the-design-of-existing-code-9780134757711) | Copyrighted book/chapter; do not embed substantial prose. |
 | Fowler, “Code Smell” | [Author's site](https://martinfowler.com/bliki/CodeSmell.html) | Cite and paraphrase; no permissive content license was identified for wholesale reuse. |
 | Refactoring.Guru | [Catalog](https://refactoring.guru/refactoring/smells), [usage policy](https://refactoring.guru/content-usage-policy) | Most content copyrighted; only limited linked quotation and limited illustration reuse are expressly permitted. |
-| Mäntylä, Vanhanen, Lassenius (2003) | [Aalto record](https://research.aalto.fi/en/publications/a-taxonomy-and-an-initial-empirical-study-of-bad-smells-in-code/), [Aalto-hosted paper](https://aaltodoc.aalto.fi/server/api/core/bitstreams/b5830068-b3bd-4866-866a-4de82355f9b0/content), DOI `10.1109/ICSM.2003.1235447` | IEEE-copyrighted reprint; cite and paraphrase rather than reproduce tables or prose. |
+| Mäntylä and Lassenius (2006) | [Springer record](https://link.springer.com/article/10.1007/s10664-006-9002-8), [author-hosted full text](https://mmantyla.github.io/ESE_2006.pdf), DOI `10.1007/s10664-006-9002-8` | Copyrighted Springer paper; cite and paraphrase rather than reproduce tables or prose. |
 | Lanza and Marinescu (2006) | [Springer record and DOI](https://link.springer.com/book/10.1007/3-540-39538-5) | Copyrighted, preview/subscription access; independently author detector contracts. |
-| Moha et al., DECOR (2010) | [Ptidej-hosted paper](https://www.ptidej.net/publications/documents/TSE09.doc.pdf), [Ptidej project page](https://www.ptidej.net/research/designsmells), DOI `10.1109/TSE.2009.50` | IEEE-copyrighted paper; hosted copy states restrictions. Do not copy its grammar, figures, or tables wholesale. |
+| Moha et al., DECOR (2010) | [DOI](https://doi.org/10.1109/TSE.2009.50), [HAL open full text](https://inria.hal.science/inria-00538476/document), DOI `10.1109/TSE.2009.50` | IEEE-copyrighted paper; cite and paraphrase. Do not copy its grammar, figures, or tables wholesale. |
 
 ## Final recommendation
 

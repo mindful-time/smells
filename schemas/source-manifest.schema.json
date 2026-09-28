@@ -28,6 +28,7 @@
           "isbn": {"type": "string", "pattern": "^[0-9]{13}$"},
           "doi": {"type": "string", "minLength": 1},
           "canonical_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "full_text_url": {"type": "string", "format": "uri", "pattern": "^https://"},
           "edition_url": {"type": "string", "format": "uri", "pattern": "^https://"},
           "revision": {"type": "string", "minLength": 1},
           "reviewed_on": {"type": "string", "format": "date"},
