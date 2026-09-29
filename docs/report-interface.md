@@ -4,6 +4,8 @@ The report is the deterministic interface between Smells and a review agent. The
 
 `report_schema_version` is `7`. Consumers must reject unsupported versions rather than guessing field semantics. Schema 7 separates compact `measurements` from matched `findings`, assigns stable per-report finding IDs, stores immutable `when_to_ignore` guidance once in `guidance_catalog`, and audits source-local suppressions. Policy schema remains `2`.
 
+Each report identifies the embedded provenance metadata with `catalog_version` and `source_manifest_version`. These compact identifiers make the report readable without duplicating the complete source manifest or concept catalog. `implementation_sha256` continues to bind the report to the exact scanner code, rule packs, schemas, manifest, and catalog shipped in that artifact.
+
 ## Normalized evidence model
 
 The top-level collections have distinct responsibilities:

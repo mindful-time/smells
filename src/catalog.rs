@@ -1,5 +1,5 @@
 use crate::policy::Registry;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -215,6 +215,14 @@ struct ConceptReference {
     ordinal: usize,
     access_scope: AccessScope,
     reference_role: ReferenceRole,
+}
+
+#[derive(Clone, Debug, Default, Serialize)]
+pub(crate) struct CatalogVersions {
+    #[serde(rename = "catalog_version")]
+    pub catalog: String,
+    #[serde(rename = "source_manifest_version")]
+    pub source_manifest: String,
 }
 
 fn parse() -> Result<(SourceManifest, ConceptCatalog), String> {
@@ -792,7 +800,7 @@ fn validate_all_registry_support(
     Ok(())
 }
 
-pub(crate) fn validate_embedded(registry: &Registry) -> Result<(), String> {
+pub(crate) fn validate_embedded(registry: &Registry) -> Result<CatalogVersions, String> {
     let (sources, catalog) = parse()?;
     let source_ids = validate_sources(&sources)?;
     let expected_manifest = format!("{}@{}", sources.manifest_id, sources.manifest_version);
@@ -801,7 +809,11 @@ pub(crate) fn validate_embedded(registry: &Registry) -> Result<(), String> {
     }
     validate_concepts(&catalog, &source_ids, registry)?;
     validate_reference_inventories(&catalog, &sources)?;
-    validate_all_registry_support(&catalog, &embedded_registries()?)
+    validate_all_registry_support(&catalog, &embedded_registries()?)?;
+    Ok(CatalogVersions {
+        catalog: catalog.catalog_version,
+        source_manifest: sources.manifest_version,
+    })
 }
 
 #[cfg(test)]
