@@ -83,6 +83,8 @@ struct ReportMetadata {
     report_schema_version: u32,
     scanner_version: &'static str,
     rule_pack: String,
+    #[serde(flatten)]
+    catalog_versions: crate::catalog::CatalogVersions,
     language: String,
     source_mode: String,
     scope: String,
@@ -285,6 +287,7 @@ impl Report {
             report_schema_version: 7,
             scanner_version: env!("CARGO_PKG_VERSION"),
             rule_pack: registry.rule_pack.clone(),
+            catalog_versions: registry.catalog_versions.clone(),
             language: registry.language.clone(),
             source_mode: source_mode.into(),
             scope: policy.scope.clone(),

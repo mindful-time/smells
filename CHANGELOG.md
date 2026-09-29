@@ -4,6 +4,9 @@ All notable changes to Smells are recorded here. Release tags use `vMAJOR.MINOR.
 
 ## Unreleased
 
+- Identify the embedded concept-catalog and source-manifest versions directly in
+  every JSON report while retaining `implementation_sha256` for exact artifact
+  identity.
 - Preserve each external registry's Trusted Publisher identity by dispatching PyPI,
   npmjs.com, and crates.io as top-level workflows, while validating the originating
   owner-approved Release run and waiting for every publication result.

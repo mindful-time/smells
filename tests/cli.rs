@@ -93,6 +93,17 @@ fn version_is_machine_checkable_for_release_smoke_tests() {
 }
 
 #[test]
+fn json_report_identifies_embedded_catalog_versions() {
+    let workspace = Workspace::new("fn main() {}\n");
+    let output = workspace.check();
+
+    assert_eq!(output.status.code(), Some(0), "{output:?}");
+    let data = report(&output);
+    assert_eq!(data["catalog_version"], "1.1.0");
+    assert_eq!(data["source_manifest_version"], "1.1.0");
+}
+
+#[test]
 fn starter_policies_activate_every_rule_and_default_to_all_groups() {
     for policy in [
         "examples/quality-policy.json",

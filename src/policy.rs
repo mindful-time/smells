@@ -12,6 +12,8 @@ pub struct Registry {
     pub rules: Vec<Rule>,
     #[serde(skip)]
     pub guidance_catalog: Vec<WhenToIgnore>,
+    #[serde(skip)]
+    pub(crate) catalog_versions: crate::catalog::CatalogVersions,
 }
 
 #[derive(Debug, Deserialize)]
@@ -408,7 +410,7 @@ pub fn registry(rule_pack: &str) -> Result<Registry, String> {
     validate_smell_mappings(&registry)?;
     validate_applicability(&registry)?;
     validate_rules(&registry)?;
-    crate::catalog::validate_embedded(&registry)?;
+    registry.catalog_versions = crate::catalog::validate_embedded(&registry)?;
     registry.guidance_catalog = embedded_guidance_catalog(&registry)?;
     Ok(registry)
 }
