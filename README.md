@@ -1,5 +1,15 @@
 # smells
 
+[![CI](https://github.com/mindful-time/smells/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mindful-time/smells/actions/workflows/ci.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/mindful-time/smells?display_name=tag&sort=semver)](https://github.com/mindful-time/smells/releases/latest)
+[![PyPI](https://img.shields.io/pypi/v/smells)](https://pypi.org/project/smells/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/smells)](https://pypistats.org/packages/smells)
+[![npm](https://img.shields.io/npm/v/%40mindful-time%2Fsmells)](https://www.npmjs.com/package/@mindful-time/smells)
+[![npm downloads](https://img.shields.io/npm/dw/%40mindful-time%2Fsmells)](https://www.npmjs.com/package/@mindful-time/smells)
+[![crates.io](https://img.shields.io/crates/v/smells)](https://crates.io/crates/smells)
+[![crates.io downloads](https://img.shields.io/crates/d/smells)](https://crates.io/crates/smells)
+[![License](https://img.shields.io/github/license/mindful-time/smells)](LICENSE)
+
 Install once. Scan every configured smell. Give humans and coding agents evidence they can audit.
 
 `smells` is a standalone, deterministic code-smell scanner for Rust, Python, TypeScript, and TSX.
