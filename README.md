@@ -3,7 +3,7 @@
 [![CI](https://github.com/mindful-time/smells/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mindful-time/smells/actions/workflows/ci.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/mindful-time/smells?display_name=tag&sort=semver)](https://github.com/mindful-time/smells/releases/latest)
 [![PyPI](https://img.shields.io/pypi/v/smells)](https://pypi.org/project/smells/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/smells)](https://pypistats.org/packages/smells)
+[![PyPI downloads/month](https://api.pepy.tech/personalized-badge/smells?period=month&units=none&left_color=grey&right_color=green&left_text=PyPI%20downloads%2Fmonth)](https://pepy.tech/projects/smells)
 [![npm](https://img.shields.io/npm/v/%40mindful-time%2Fsmells)](https://www.npmjs.com/package/@mindful-time/smells)
 [![npm downloads](https://img.shields.io/npm/dw/%40mindful-time%2Fsmells)](https://www.npmjs.com/package/@mindful-time/smells)
 [![crates.io](https://img.shields.io/crates/v/smells)](https://crates.io/crates/smells)
