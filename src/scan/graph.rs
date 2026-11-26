@@ -1543,7 +1543,10 @@ mod tests {
             panic!("an unclosed parameter list must not parse");
         };
         let message = super::super::parse_error_message("src/lib.rs", &error);
-        assert!(message.starts_with("parse error in src/lib.rs:2:"), "{message}");
+        assert!(
+            message.starts_with("parse error in src/lib.rs:2:"),
+            "{message}"
+        );
         assert!(message.ends_with(&format!(": {error}")), "{message}");
     }
 }
