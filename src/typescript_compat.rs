@@ -223,9 +223,10 @@ fn previous_code_end(source: &str, line_start: usize) -> Option<char> {
 fn call_signature_separators(source: &str, range: Range<usize>) -> Vec<usize> {
     let line_starts = std::iter::once(0).chain(
         source
+            .get(..range.end)
+            .unwrap_or(source)
             .match_indices('\n')
-            .map(|(index, _)| index + 1)
-            .take_while(|start| *start < range.end),
+            .map(|(index, _)| index + 1),
     );
     line_starts
         .filter_map(|start| {
