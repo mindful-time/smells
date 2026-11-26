@@ -5856,7 +5856,8 @@ fn python_keyword_only_defaults_do_not_count_as_arguments() {
         concat!(
             "def configure(a, b, *, c=1, d=2, e=3):\n    return a\n\n",
             "def spread(a, *args, b=1, c, d=2):\n    return a\n\n",
-            "def required(a, b, *, c, d):\n    return a\n",
+            "def required(a, b, *, c, d):\n    return a\n\n",
+            "def positional(a, b=1, *, c=2):\n    return a\n",
         ),
         &portable_policy("python"),
     );
@@ -5873,6 +5874,8 @@ fn python_keyword_only_defaults_do_not_count_as_arguments() {
     assert_eq!(observed("configure"), 2);
     assert_eq!(observed("spread"), 3);
     assert_eq!(observed("required"), 4);
+    // A positional default before `*` still counts.
+    assert_eq!(observed("positional"), 2);
 }
 
 #[test]
