@@ -31,10 +31,14 @@ fn family_root(parents: &mut BTreeMap<usize, usize>, member: usize) -> usize {
     let mut root = member;
     // A parent chain visits each member at most once, which also bounds the walk.
     for _ in 0..=parents.len() {
-        match parents.get(&root) {
-            Some(&parent) if parent != root => root = parent,
-            _ => break,
+        let Some(&parent) = parents.get(&root) else {
+            break;
+        };
+        // Roots point at themselves once compressed; stop there instead of spinning.
+        if parent == root {
+            break;
         }
+        root = parent;
     }
     parents.insert(member, root);
     root

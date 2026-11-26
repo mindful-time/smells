@@ -1536,4 +1536,14 @@ mod tests {
         assert!(test("crate::tests::inner"));
         assert!(!test("crate::live"));
     }
+
+    #[test]
+    fn rust_parse_errors_name_the_file_line_and_column() {
+        let Err(error) = syn::parse_file("fn ok() {}\nfn broken( {}\n") else {
+            panic!("an unclosed parameter list must not parse");
+        };
+        let message = super::super::parse_error_message("src/lib.rs", &error);
+        assert!(message.starts_with("parse error in src/lib.rs:2:"), "{message}");
+        assert!(message.ends_with(&format!(": {error}")), "{message}");
+    }
 }
