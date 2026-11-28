@@ -2,11 +2,14 @@ use super::{
     common::{location_at, observation, primitive_type, simple_names},
     model::SourceModel,
 };
-use crate::{core::model::Input, evidence::Observation, policy::Rule, report::Location};
+use crate::{
+    core::model::Input, evidence::Observation, names::dunder, policy::Rule, report::Location,
+};
 use regex::Regex;
 use serde_json::json;
 use std::{
     collections::{BTreeMap, BTreeSet},
+    ops::Range,
     sync::OnceLock,
 };
 
@@ -29,7 +32,7 @@ fn member_access() -> &'static Regex {
 fn private_member_access() -> &'static Regex {
     static ACCESS: OnceLock<Regex> = OnceLock::new();
     ACCESS.get_or_init(|| {
-        Regex::new(r"\b([A-Za-z_][A-Za-z0-9_]*)\??\.((?:#|_)[A-Za-z_][A-Za-z0-9_]*)")
+        Regex::new(r"\b([A-Za-z_][A-Za-z0-9_]*)\??\.(_[A-Za-z_][A-Za-z0-9_]*)")
             .expect("valid built-in private-member expression")
     })
 }
@@ -64,7 +67,13 @@ fn navigation_adapters(language: &str) -> &'static [&'static str] {
             "as_bytes",
             "to_string",
             "to_owned",
+            "into_owned",
             "to_vec",
+            "to_str",
+            "to_string_lossy",
+            "as_path",
+            "as_os_str",
+            "to_path_buf",
             "into",
             "len",
             "is_empty",
@@ -232,11 +241,12 @@ fn pattern_alias() -> &'static Regex {
     })
 }
 
-/// A Rust `match` whose scrutinee starts at a name, such as `match &self.legacy {`.
+/// A Rust `match` whose scrutinee starts at a name, possibly borrowed or
+/// dereferenced, such as `match &self.legacy {` or `match *self {`.
 fn match_scrutinee() -> &'static Regex {
     static SCRUTINEE: OnceLock<Regex> = OnceLock::new();
     SCRUTINEE.get_or_init(|| {
-        Regex::new(r"\bmatch\s+(?:&\s*(?:mut\s+)?)?([A-Za-z_][A-Za-z0-9_]*)\b[^{;]*\{")
+        Regex::new(r"\bmatch\s+(?:&\s*(?:mut\s+)?|\*\s*)?([A-Za-z_][A-Za-z0-9_]*)\b[^{;]*\{")
             .expect("valid built-in match-scrutinee expression")
     })
 }
@@ -291,8 +301,76 @@ fn match_arm_patterns(body: &str, start: usize) -> Vec<&str> {
     patterns
 }
 
+/// A local closure whose first parameter is a name, such as
+/// `const removeFromMap = (map: Map<string, any[]>) => {` or `function visit(node) {`.
+fn local_closure() -> &'static Regex {
+    static CLOSURE: OnceLock<Regex> = OnceLock::new();
+    CLOSURE.get_or_init(|| {
+        Regex::new(
+            r"\b(?:(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*(?:async\s+)?(?:function\b\s*)?|function\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*(?:<[^>(]*>)?\s*)\(\s*([A-Za-z_$][A-Za-z0-9_$]*)\b",
+        )
+        .expect("valid built-in local-closure expression")
+    })
+}
+
+/// The opening of a call whose first argument starts at a name, such as
+/// `(this.listeners)` after `removeFromMap`.
+fn call_argument() -> &'static Regex {
+    static CALL: OnceLock<Regex> = OnceLock::new();
+    CALL.get_or_init(|| {
+        Regex::new(r"^\s*\(\s*([A-Za-z_$][A-Za-z0-9_$]*)\b")
+            .expect("valid built-in call-argument expression")
+    })
+}
+
+/// The root each use of closure `name` outside its declaration passes as its first
+/// argument, or `None` when any use is not such a call, as in `items.forEach(visit)`.
+fn closure_call_roots<'body>(
+    body: &'body str,
+    name: &str,
+    declaration: Range<usize>,
+) -> Option<Vec<&'body str>> {
+    let identifier = |c: char| c.is_ascii_alphanumeric() || c == '_' || c == '$';
+    body.match_indices(name)
+        .map(|(start, _)| start)
+        .filter(|start| {
+            let (before, after) = (&body[..*start], &body[start + name.len()..]);
+            !declaration.contains(start)
+                && !before.ends_with(identifier)
+                && !after.starts_with(identifier)
+                && !before.trim_end().ends_with('.')
+        })
+        .map(|start| {
+            call_argument()
+                .captures(&body[start + name.len()..])
+                .map(|call| call.get(1).expect("call argument group").as_str())
+        })
+        .collect()
+}
+
+/// The first parameter of a local closure, bound to the root its calls pass in, when
+/// every use in the body is a call passing an argument from the same root, as in
+/// `removeFromMap(this.a); removeFromMap(this.b)`. A closure that is never called,
+/// called with arguments from different roots, or passed on as a value binds nothing.
+fn closure_parameter_bindings(body: &str) -> Vec<(usize, &str, Vec<&str>)> {
+    local_closure()
+        .captures_iter(body)
+        .filter_map(|capture| {
+            let whole = capture.get(0).expect("closure match");
+            let name = capture.get(1).or_else(|| capture.get(2))?.as_str();
+            let parameter = capture.get(3).expect("closure parameter group").as_str();
+            let roots = closure_call_roots(body, name, whole.range())?;
+            let (&root, others) = roots.split_first()?;
+            others
+                .iter()
+                .all(|other| *other == root)
+                .then(|| (whole.start(), root, vec![parameter]))
+        })
+        .collect()
+}
+
 /// Bindings in body order with the root they come from: plain aliases, destructuring
-/// patterns and the arms of a `match` on a name.
+/// patterns, the arms of a `match` on a name and local closure parameters.
 fn alias_bindings(body: &str) -> Vec<(usize, &str, Vec<&str>)> {
     let mut bindings: Vec<(usize, &str, Vec<&str>)> = Vec::new();
     for capture in owned_alias().captures_iter(body) {
@@ -317,6 +395,7 @@ fn alias_bindings(body: &str) -> Vec<(usize, &str, Vec<&str>)> {
             .collect();
         bindings.push((whole.start(), capture.get(1).expect("root").as_str(), names));
     }
+    bindings.extend(closure_parameter_bindings(body));
     bindings.sort_by_key(|(start, _, _)| *start);
     bindings
 }
@@ -510,10 +589,15 @@ fn rust_dependency_contract(
 }
 
 /// Whether a `_`-prefixed member name is public by convention: a dunder protocol or
-/// builtin such as `__html__`, `__version__` or `__proto__`, or, in TypeScript, an
-/// all-caps `__NAME` binding constant such as a Cloudflare `__STATIC_CONTENT`.
+/// builtin such as `__html__`, `__version__` or `__proto__`; in Python, a sunder enum
+/// protocol name such as `_value_` or `_missing_`; or, in TypeScript, an all-caps
+/// `__NAME` binding constant such as a Cloudflare `__STATIC_CONTENT`.
 fn public_underscore_member(language: &str, member: &str) -> bool {
-    let dunder = member.len() > 4 && member.starts_with("__") && member.ends_with("__");
+    let sunder = language == "python"
+        && member
+            .strip_prefix('_')
+            .and_then(|rest| rest.strip_suffix('_'))
+            .is_some_and(|name| !name.is_empty() && !name.starts_with('_') && !name.ends_with('_'));
     let constant = language == "typescript"
         && member.strip_prefix("__").is_some_and(|name| {
             name.starts_with(|character: char| character.is_ascii_uppercase())
@@ -521,7 +605,46 @@ fn public_underscore_member(language: &str, member: &str) -> bool {
                     character.is_ascii_uppercase() || character.is_ascii_digit() || character == '_'
                 })
         });
-    dunder || constant
+    dunder(member) || sunder || constant
+}
+
+/// Whether the innermost class around `offset`, the one that starts last, in `path` declares `member` as a
+/// field or method or uses it on its own receiver. Access to that member on
+/// another instance of the class, as in `other._key` inside `__eq__`, is the
+/// class's own.
+fn enclosing_class_member(model: &SourceModel, path: &str, offset: usize, member: &str) -> bool {
+    let Some(class) = model
+        .classes
+        .iter()
+        .filter(|class| class.location.path == path)
+        .filter(|class| class.range.0 <= offset && offset < class.range.1)
+        .max_by_key(|class| class.range.0)
+    else {
+        return false;
+    };
+    class.fields.iter().any(|field| field.name == member)
+        || class.methods.iter().any(|method| method.name == member)
+        || receiver_member(&class.source, member)
+}
+
+/// Whether `source` uses `member` on `self` or `this`, as in `self._key`.
+fn receiver_member(source: &str, member: &str) -> bool {
+    let word = |character: char| character.is_alphanumeric() || character == '_';
+    source.match_indices(member).any(|(start, _)| {
+        let whole = !source[start + member.len()..].starts_with(word);
+        let receiver = source[..start]
+            .trim_end()
+            .strip_suffix('.')
+            .map(str::trim_end)
+            .is_some_and(|before| {
+                ["self", "this"].iter().any(|name| {
+                    before
+                        .strip_suffix(name)
+                        .is_some_and(|rest| !rest.ends_with(word))
+                })
+            });
+        whole && receiver
+    })
 }
 
 pub(super) fn dependency_contract(
@@ -543,6 +666,10 @@ pub(super) fn dependency_contract(
             .captures_iter(code)
             .filter(|capture| !matches!(&capture[1], "self" | "cls" | "this" | "Self" | "super"))
             .filter(|capture| !public_underscore_member(language, &capture[2]))
+            .filter(|capture| {
+                let start = capture.get(0).expect("private member match").start();
+                !enclosing_class_member(model, path, start, &capture[2])
+            })
             .collect::<Vec<_>>();
         let Some(first) = accesses.first() else {
             continue;
@@ -569,7 +696,7 @@ pub(super) fn dependency_contract(
             evidence: json!({
                 "collector": "source_private_member_access_v2",
                 "contract": "language_private_naming_or_syntax",
-                "public_by_convention": "dunder names; TypeScript all-caps __NAME constants",
+                "public_by_convention": "dunder names; Python sunder names; TypeScript all-caps __NAME constants",
             }),
         });
     }
@@ -645,6 +772,15 @@ mod tests {
         assert!(public_underscore_member("python", "__html__"));
         assert!(public_underscore_member("python", "__a__"));
         assert!(!public_underscore_member("python", "____"));
+        assert!(public_underscore_member("python", "_value_"));
+        assert!(public_underscore_member("python", "_a_"));
+        assert!(!public_underscore_member("python", "_value"));
+        assert!(!public_underscore_member("python", "___"));
+        assert!(!public_underscore_member("python", "__"));
+        assert!(!public_underscore_member("python", "_"));
+        assert!(!public_underscore_member("python", "_a__"));
+        assert!(!public_underscore_member("python", "__a_"));
+        assert!(!public_underscore_member("typescript", "_value_"));
         assert!(public_underscore_member("typescript", "__STATIC_CONTENT"));
         assert!(!public_underscore_member("typescript", "__1A"));
         assert!(!public_underscore_member("typescript", "__Ab"));
@@ -702,6 +838,7 @@ mod tests {
     fn navigation_adapters_are_transparent_only_in_their_own_language() {
         for (language, expression) in [
             ("rust", "a.b.iter().c"),
+            ("rust", "a.b.into_owned().c"),
             ("python", "a.b.items().c"),
             ("typescript", "a.b.toString().c"),
         ] {
@@ -1017,6 +1154,26 @@ mod tests {
     }
 
     #[test]
+    fn foreign_accesses_treat_bindings_from_a_dereferenced_self_match_as_owned() {
+        let source = concat!(
+            "pub enum E { A(Inner), B(Inner) }\n",
+            "impl E {\n",
+            "    fn field(&self, other: &O) {\n",
+            "        match *self {\n",
+            "            E::A(ref s) => { s.a(); s.b(); }\n",
+            "            E::B(ref s) => { s.c(); other.d(); }\n",
+            "        }\n",
+            "        other.e();\n",
+            "    }\n",
+            "}\n",
+        );
+        assert_eq!(
+            foreign_measurements("rust.foreign_accesses", "rust-v1", "src/lib.rs", source),
+            [("src/lib.rs::E.field".into(), 2, 5)]
+        );
+    }
+
+    #[test]
     fn foreign_accesses_ignore_python_statement_annotations() {
         let source = concat!(
             "class Config:\n",
@@ -1059,6 +1216,47 @@ mod tests {
     }
 
     #[test]
+    fn foreign_accesses_treat_closure_parameters_given_only_owned_state_as_owned() {
+        let source = concat!(
+            "class HMRContext {\n",
+            "  off(event: string, other: Other) {\n",
+            "    const removeFromMap = (map: Map<string, any[]>) => {\n",
+            "      const existing = map.get(event)\n",
+            "      map.set(event, existing.filter(Boolean))\n",
+            "    }\n",
+            "    removeFromMap(this.client.listeners)\n",
+            "    removeFromMap(this.newListeners)\n",
+            "    other.removeFromMap(other.listeners)\n",
+            "    const mixed = (m: Map<string, any[]>) => m.clear()\n",
+            "    mixed(this.newListeners)\n",
+            "    mixed(other.listeners)\n",
+            "    function visit(node: Node) { node.a(); node.b() }\n",
+            "    visit(other.root)\n",
+            "    const unused = (x: X) => x.run()\n",
+            "    const walk = (n: Node) => { n.a(); n.b() }\n",
+            "    walk(this.root)\n",
+            "    if (walk(other.root)) {}\n",
+            "    const each = (n: Node) => { n.a(); n.b() }\n",
+            "    each(this.root)\n",
+            "    this.items.forEach(each)\n",
+            "    const keep = (k: Node) => { k.a(); k.b() }\n",
+            "    keep(this.root)\n",
+            "    const my_keep = 1, $keep = 2\n",
+            "  }\n",
+            "}\n",
+        );
+        assert_eq!(
+            foreign_measurements(
+                "typescript.foreign_accesses",
+                "typescript-v1",
+                "sample.ts",
+                source
+            ),
+            [("sample.ts::HMRContext.off".into(), 13, 25)]
+        );
+    }
+
+    #[test]
     fn dependency_contract_treats_dunders_and_binding_constants_as_public() {
         let source = concat!(
             "o.__html__()\n",
@@ -1091,6 +1289,111 @@ mod tests {
             );
             assert_eq!(observations[0].location.line, first_line, "{rule_id}");
         }
+    }
+
+    #[test]
+    fn dependency_contract_treats_enclosing_class_members_as_owned() {
+        let cases = [
+            (
+                "typescript.dependency_contract",
+                "typescript-v1",
+                "app.ts",
+                concat!(
+                    "export class App {\n",
+                    "  _basePath = '/'\n",
+                    "  #handler = 1\n",
+                    "  #clone(): App {\n",
+                    "    const clone = new App()\n",
+                    "    clone.#handler = this.#handler\n",
+                    "    clone._basePath = this._basePath\n",
+                    "    clone._route = 1\n",
+                    "    return clone\n",
+                    "  }\n",
+                    "}\n",
+                    "other._basePath\n",
+                ),
+                (2, 8),
+            ),
+            (
+                "python.dependency_contract",
+                "python-v1",
+                "key.py",
+                concat!(
+                    "class Key:\n",
+                    "    def __init__(self, value):\n",
+                    "        self._value = value\n",
+                    "    def _hash(self):\n",
+                    "        return 1\n",
+                    "    def __eq__(self, other):\n",
+                    "        return other._value == self._value and other._hash() and other._raw\n",
+                    "key._value\n",
+                ),
+                (2, 7),
+            ),
+        ];
+        for (rule_id, rule_pack, path, source, (expected, line)) in cases {
+            let input = input(rule_pack, &[(path, source)]);
+            let model = super::super::model::source_model(&rule(rule_id), &input).unwrap();
+            let observations = dependency_contract(&rule(rule_id), &model, &input).unwrap();
+            assert_eq!(
+                observations[0].measurements["forbidden_accesses"], expected,
+                "{rule_id}"
+            );
+            assert_eq!(observations[0].location.line, line, "{rule_id}");
+        }
+    }
+
+    #[test]
+    fn receiver_members_are_whole_names_on_self_or_this() {
+        assert!(receiver_member("return self._key", "_key"));
+        assert!(receiver_member("this . _key = 1", "_key"));
+        assert!(receiver_member("x = other._key + self._key", "_key"));
+        assert!(!receiver_member("return self._keys", "_key"));
+        assert!(!receiver_member("return myself._key", "_key"));
+        assert!(!receiver_member("return other._key", "_key"));
+        assert!(!receiver_member("return self_key", "_key"));
+        assert!(!receiver_member("_key = 1", "_key"));
+    }
+
+    #[test]
+    fn enclosing_class_members_come_from_the_innermost_class() {
+        let source = concat!(
+            "class Outer:\n",
+            "    _a = 1\n",
+            "    class Inner:\n",
+            "        def _m(self):\n",
+            "            return 1\n",
+            "    def run(self):\n",
+            "        return self._a\n",
+            "x = 1\n",
+        );
+        let model = super::super::model::source_model(
+            &rule("python.dependency_contract"),
+            &input("python-v1", &[("a.py", source)]),
+        )
+        .unwrap();
+        let inner = source.find("return 1").unwrap();
+        assert!(enclosing_class_member(&model, "a.py", inner, "_m"));
+        assert!(!enclosing_class_member(&model, "a.py", inner, "_a"));
+        assert!(!enclosing_class_member(&model, "a.py", inner, "_z"));
+        let outer = model
+            .classes
+            .iter()
+            .find(|class| class.name == "Outer")
+            .unwrap()
+            .range;
+        assert!(enclosing_class_member(&model, "a.py", outer.1 - 1, "_a"));
+        assert!(!enclosing_class_member(&model, "a.py", outer.1, "_a"));
+
+        let source = "class Box {\n  _a: number = 1\n  run() { return 2 }\n}\n";
+        let model = super::super::model::source_model(
+            &rule("typescript.dependency_contract"),
+            &input("typescript-v1", &[("a.ts", source)]),
+        )
+        .unwrap();
+        let body = source.find("return").unwrap();
+        assert!(enclosing_class_member(&model, "a.ts", body, "_a"));
+        assert!(!enclosing_class_member(&model, "a.ts", body, "_z"));
     }
 
     #[test]

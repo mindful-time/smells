@@ -4,6 +4,26 @@ All notable changes to Smells are recorded here. Release tags use `vMAJOR.MINOR.
 
 ## 0.7.0 - 2026-11-23
 
+- Make the first run shorter. `smells check` scans the current directory when
+  neither `--path` nor `--staged` is given, and without `--log` or `--format` it
+  prints a short summary that names the first three errors or blocking findings
+  and writes the complete Finding Log to `smells-findings.log`; `--format table`
+  still prints every finding. A missing `quality-policy.json` still exits `2`,
+  and the error now names the exact `curl` command for the matching starter
+  policy. `smells doctor` ends with numbered next steps (`next_steps` in JSON),
+  which ask for errors to be fixed before suggesting a check and, in a monorepo
+  with no root manifest, name each subproject to run doctor on. Doctor finds
+  `AGENTS.md` and `CLAUDE.md` in the nearest folder up to the Git root, and reads
+  CODEOWNERS at the Git root against the repository-relative policy path, and
+  warns when the policy lies outside the repository. The commands it prints
+  quote paths that contain spaces or shell characters, and its `smells check`
+  step passes `--policy` when the policy is not `quality-policy.json`. Its
+  matched-smell count equals the rows its smell table shows. Its health score
+  counts findings per scanned file, so codebases of different sizes compare
+  fairly, and its JSON `status` is `checks_passed` or `checks_failed`. `smells
+  check --staged` reads the default policy from the index. `--help` works after
+  any command, except as the value of an option such as `--path -h`.
+
 - Scan every Rust configuration variant instead of exiting `2` on conditional
   alternatives. Same-named `cfg` modules, `#[cfg_attr(…, path = "…")]` children
   and repeated type declarations each become a variant reported at its own file
@@ -42,6 +62,24 @@ All notable changes to Smells are recorded here. Release tags use `vMAJOR.MINOR.
   command that produces LCOV for the project's language. Blocking findings are
   never hidden. The burndown compares both sides without non-blocking CRAP so
   that adding coverage does not read as a regression.
+- Find and measure coverage without `--coverage`. `smells check` on a working
+  tree without `--base` reads the same `lcov.info`, `coverage/lcov.info` or
+  `target/llvm-cov/lcov.info` as doctor and names the file on stderr; staged and
+  `--base` scans still read coverage only from `--coverage`, because the
+  reference has none. With no file, `doctor` and `check` at a terminal offer to
+  measure it: they print the install step when the tool is missing
+  (`cargo-llvm-cov`, `pytest-cov`, or `@vitest/coverage-v8` matching the
+  installed vitest) and the test run (`cargo llvm-cov`, `pytest --cov` through
+  `uv` or the project virtualenv, `vitest run --coverage` or `jest --coverage`
+  through the lockfile's package manager), and run nothing unless the answer is
+  `y`. A spinner shows the elapsed time, test output goes to a log file, and a
+  failed run names the log and continues on the 0%-coverage estimates. No offer
+  appears when `CI` is set, with `--format json`, or when stdin or stderr is not
+  a terminal. The policy's language picks the tool, so a Rust crate packaged
+  with maturin gets `cargo llvm-cov`; manifests decide only without a readable
+  policy. With coverage, doctor's `coverage` check also counts the CRAP
+  estimates it still hides in scanned files the LCOV omits, such as Rust
+  integration tests, which `check` reports.
 - Count cyclomatic complexity on the syntax tree in every language. The old lexical count read keywords inside
   strings and comments, missed Rust `?`, and counted closure `||` and `=>`.
   Rust now uses cargo-crap's decision points (each `?` and match arm, `if`,
@@ -204,6 +242,87 @@ All notable changes to Smells are recorded here. Release tags use `vMAJOR.MINOR.
     `python.unused_code`, `typescript.primitive_slots` and
     `typescript.temporary_fields` move to `2`; `rust.unused_code` moves to
     `3`.
+- Fix the remaining calibration false positives without changing any rule
+  version, threshold or policy mode. All 316 sampled findings the final scan
+  still reports are true positives or defensible:
+  - The history rules (`divergent_change`, `shotgun_surgery`) do not count a
+    file change whose only edit adds, removes or moves lint, formatter,
+    type-checker or coverage suppressions (`eslint-disable`, `@ts-expect-error`,
+    `noqa`, `type: ignore`, Rust `#[allow]`/`#[expect]` lines). Patches are read
+    without fetching missing objects; in a blobless partial clone every changed
+    file still counts.
+  - `rust.alternative_interfaces` reads the owner's own unqualified type name
+    as `Self`, so constructors returning `Result<Owner>` in different owners share one
+    interface.
+  - Python and TypeScript `alternative_interfaces` compare effective method
+    sets that include methods inherited from authored bases.
+  - Python and TypeScript `dependency_contract` treat members the enclosing
+    class declares or uses on its own receiver as owned; TypeScript `#private`
+    members never count.
+  - `python.library_capabilities` does not count assignments to an attribute an
+    authored class declares as assignable (an annotated field or an
+    `@name.setter` property).
+- Run a fourth calibration round on a fresh scan of eleven of the twelve
+  codebases (fastapi was skipped) and fix the false positives it found, without
+  changing any rule version, threshold or policy mode. 26 of 248 sampled
+  findings were false positives; all 26 are fixed:
+  - The history rules do not count a file whose only change is a move with
+    unchanged content, or whose only edit replaces string literals assigned to
+    `version`, `VERSION` or `__version__`. Commit subjects that add, fix, drop
+    or update type hints, type annotations, Python support or Python versions
+    are sweeps; a subject that only mentions them, such as a bug fix, is not.
+  - TypeScript class properties holding an arrow function or function
+    expression are methods, not fields. Overload signatures and their
+    implementation count as one method. `comment_share` excludes directive
+    comments such as `@ts-expect-error`, `noqa` and `type: ignore`, and Python
+    `#:` attribute doc comments.
+  - Python field sets exclude dunder class attributes and `@name.setter`
+    properties, `data_class` skips `Enum` subclasses, `dependency_contract`
+    treats sunder names such as `_value_` as public, and
+    `library_capabilities` does not count writes to authored classes or their
+    methods.
+  - `typescript.library_capabilities` treats `process.env` writes as ordinary
+    use.
+  - `typescript.foreign_accesses` treats a local closure's parameter as owned
+    when every call passes it owned state. `rust.foreign_accesses` treats
+    bindings from `match *self` arms as owned.
+  - `rust.data_clumps` does not count constructors of the struct that declares
+    the group as supporters. `rust.unused_type_parameters` does not count a
+    marker trait's type parameters, or a trait type parameter that some impl
+    header gives a concrete argument or omits for its default. `rust.unused_code` treats functions nested in
+    an item under `#[allow(dead_code)]` as allowed. `rust.navigation_chains`
+    treats `into_owned`, `to_str`, `to_string_lossy`, `as_path` and
+    `to_path_buf` as transparent conversions.
+- Fix detector bugs found in code review, without changing any rule version,
+  threshold or policy mode:
+  - The history rules' suppression-only check counts unchanged context lines on
+    both sides of a hunk, so a change next to an added suppression still counts.
+    A reordered line is a change, and a move counts as move-only only when a
+    deleted file's lines reappear in a newly created file. Git's `a/` and `b/`
+    patch prefixes are forced, so `diff.noprefix` or `diff.mnemonicPrefix` in the
+    user's Git config cannot change the result.
+  - `python.library_capabilities` counts an assignment through an imported name,
+    such as `requests.Session.headers = ...`, even when an authored class has a
+    field of that name. Writes through a `@property` or `@cached_property`
+    reached from `self` or `cls` count, and `Class.method.attr = ...` is excluded
+    only when that class declares the method.
+  - `typescript.foreign_accesses` treats a closure parameter as owned only when
+    every use of the closure is a direct call. A closure called inside another
+    call, such as `if (visit(other.root))`, or passed as a callback, such as
+    `forEach(visit)`, binds nothing.
+  - A TypeScript property holding a generator function is a method only, not a
+    field as well.
+  - `library_capabilities` treats a relative import, or a Python import of the
+    project's own top-level package or module, as project code rather than a
+    library, so `flask.session.permanent = True` inside flask and writes to
+    zod's own `core.globalConfig` no longer count. A Python mutation through an
+    imported name, such as `monkeypatch.setattr(FormData, ...)` on starlette's
+    `FormData`, counts even when an authored class shares the name.
+- When a `--base` ratchet run has several blockers of one rule with equal
+  burden, mark the ones already in the base as legacy and report the newly added
+  one as the regression. Before, the tie went to path order, so adding a copy of
+  flask's `send_file` in `src/flask/attachments.py` was reported as
+  `helpers.py:417` and `testing.py:49`. The number of regressions is unchanged.
 - Resolve `mod` declarations in Cargo target roots other than `lib.rs` and
   `main.rs` (files directly in `tests/`, `examples/` and `benches/`,
   `src/bin/*.rs` and `build.rs`) next to the root file. Before, the scan exited

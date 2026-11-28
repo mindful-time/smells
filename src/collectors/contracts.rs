@@ -3,7 +3,7 @@ use super::{
     model::{ClassFact, SourceModel},
     syntax::{code_only, import_statements},
 };
-use crate::{core::model::Input, evidence::Observation, policy::Rule};
+use crate::{core::model::Input, evidence::Observation, names::dunder, policy::Rule};
 use regex::Regex;
 use serde_json::json;
 use std::{
@@ -148,7 +148,7 @@ fn qualified_base_target(derived: &ClassFact, base: &str) -> Option<String> {
 /// Resolve a declared base by name. A same-file declaration wins; otherwise every
 /// same-named declaration elsewhere competes, so an unrelated namesake in another file
 /// makes the base ambiguous instead of resolving to the only interface among them.
-fn resolve_declared_base<'a>(
+pub(super) fn resolve_declared_base<'a>(
     model: &'a SourceModel,
     derived: &ClassFact,
     base: &str,
@@ -806,7 +806,14 @@ fn rust_library_capabilities(model: &SourceModel) -> Vec<Observation> {
         .collect()
 }
 
-/// Names bound by TypeScript imports: defaults, named (after `as`), and namespaces.
+/// Whether a module specifier names a file of the project itself, as `./config` or
+/// `../util` do, rather than a library.
+fn relative_specifier(specifier: &str) -> bool {
+    specifier.starts_with('.')
+}
+
+/// Names bound by TypeScript imports of libraries: defaults, named (after `as`), and
+/// namespaces. A relative import binds the project's own code, not a library.
 fn typescript_imported_names(
     path: &str,
     source: &str,
@@ -814,17 +821,28 @@ fn typescript_imported_names(
 ) -> Result<BTreeSet<String>, String> {
     static REQUIRE: OnceLock<Regex> = OnceLock::new();
     let require = REQUIRE.get_or_init(|| {
-        Regex::new(r"\b(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*require\s*\(")
-            .expect("valid require expression")
+        Regex::new(
+            r#"\b(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*require\s*\(\s*(?:['"`]([^'"`]*))?"#,
+        )
+        .expect("valid require expression")
     });
     let mut names = require
         .captures_iter(code)
+        .filter(|captures| {
+            !captures
+                .get(2)
+                .is_some_and(|module| relative_specifier(module.as_str()))
+        })
         .map(|captures| captures[1].to_string())
         .collect::<BTreeSet<_>>();
     for statement in import_statements(path, source)? {
         let Some(clause) = statement.trim().strip_prefix("import") else {
             continue;
         };
+        let specifier = statement.rsplit(['\'', '"']).nth(1).unwrap_or_default();
+        if relative_specifier(specifier) {
+            continue;
+        }
         let clause = clause.split([';', '=']).next().unwrap_or_default();
         let clause = clause
             .rsplit_once(" from")
@@ -847,7 +865,8 @@ fn typescript_imported_names(
 }
 
 /// Whether a workaround match counts. `setattr(self, ...)` mutates the receiver
-/// itself; a TypeScript `a.b.c =` counts only when `a` is imported or a host global.
+/// itself; a TypeScript `a.b.c =` counts only when `a` is imported or a host global,
+/// and a `process.env` write sets an environment variable rather than patching a library.
 fn library_target(matched: &str, imported: Option<&BTreeSet<String>>) -> bool {
     const HOST_GLOBALS: [&str; 5] = ["window", "globalThis", "global", "process", "navigator"];
     if let Some(arguments) = matched.strip_prefix("setattr") {
@@ -861,7 +880,11 @@ fn library_target(matched: &str, imported: Option<&BTreeSet<String>>) -> bool {
     if matched.contains(".prototype.") {
         return true;
     }
-    let receiver = matched.split('.').next().unwrap_or_default();
+    let mut names = matched.split('.');
+    let receiver = names.next().unwrap_or_default();
+    if receiver == "process" && names.next().is_some_and(|name| name.trim_end() == "env") {
+        return false;
+    }
     imported.is_none_or(|imported| imported.contains(receiver) || HOST_GLOBALS.contains(&receiver))
 }
 
@@ -892,6 +915,221 @@ fn chain_root(code: &str, failure: &str, start: usize) -> bool {
     !before.ends_with(['.', ':', '|']) && !type_query
 }
 
+/// Attributes that authored Python classes declare as assignable: annotated class
+/// fields and `@name.setter` properties. Assigning one is ordinary use of an
+/// authored API, not a workaround for a library class that lacks it.
+fn authored_settable_attributes(model: &SourceModel) -> BTreeSet<String> {
+    static SETTER: OnceLock<Regex> = OnceLock::new();
+    let setter = SETTER.get_or_init(|| {
+        Regex::new(r"@\s*([A-Za-z_][A-Za-z0-9_]*)\s*\.\s*setter\b")
+            .expect("valid property setter expression")
+    });
+    let mut attributes = BTreeSet::new();
+    for class in &model.classes {
+        attributes.extend(class.fields.iter().map(|field| field.name.clone()));
+        attributes.extend(
+            setter
+                .captures_iter(&class.source)
+                .map(|captures| captures[1].to_string()),
+        );
+    }
+    attributes
+}
+
+/// Names of properties a Python class defines with `@property` or `@cached_property`.
+fn python_properties(source: &str) -> BTreeSet<&str> {
+    static PROPERTY: OnceLock<Regex> = OnceLock::new();
+    let property = PROPERTY.get_or_init(|| {
+        Regex::new(
+            r"@\s*(?:functools\s*\.\s*)?(?:cached_)?property\b[^\n]*\n(?:\s*@[^\n]*\n)*\s*(?:async\s+)?def\s+([A-Za-z_][A-Za-z0-9_]*)",
+        )
+        .expect("valid property decorator expression")
+    });
+    property
+        .captures_iter(source)
+        .filter_map(|captures| captures.get(1).map(|name| name.as_str()))
+        .collect()
+}
+
+/// Authored Python class names and, per class, the methods it declares that are
+/// not properties. A property returns a value that may be a library object.
+struct AuthoredClasses<'model> {
+    methods: BTreeMap<&'model str, BTreeSet<&'model str>>,
+}
+
+impl<'model> AuthoredClasses<'model> {
+    fn new(model: &'model SourceModel) -> Self {
+        let mut methods = BTreeMap::<&str, BTreeSet<&str>>::new();
+        for class in &model.classes {
+            let properties = python_properties(&class.source);
+            methods.entry(class.name.as_str()).or_default().extend(
+                class
+                    .methods
+                    .iter()
+                    .map(|method| method.name.as_str())
+                    .filter(|name| !properties.contains(name)),
+            );
+        }
+        Self { methods }
+    }
+
+    fn class(&self, name: &str) -> bool {
+        self.methods.contains_key(name)
+    }
+
+    /// Whether any authored class declares `member` as a method; a receiver
+    /// does not say which class it belongs to.
+    fn any_method(&self, member: &str) -> bool {
+        self.methods
+            .values()
+            .any(|methods| methods.contains(member))
+    }
+
+    /// Whether a Python workaround mutates an authored class object or one of its
+    /// methods rather than a library object: `setattr(codes, ...)` on an authored
+    /// class, `Outer.Inner.__doc__ = ...`, or `cls.__rich_repr__.angular = ...`.
+    /// A field reached through the receiver, as in `self.session.headers = ...`,
+    /// may hold a library object and still counts, and so does an object reached
+    /// through an imported name that an authored class elsewhere happens to share.
+    fn target(&self, matched: &str, imported: &BTreeSet<String>) -> bool {
+        let names = mutated_object(matched)
+            .split('.')
+            .map(str::trim)
+            .collect::<Vec<_>>();
+        if names.first().is_some_and(|root| imported.contains(*root)) {
+            return false;
+        }
+        match names.as_slice() {
+            [class] => *class == "cls" || self.class(class),
+            [root, member] => self.authored_member(root, member),
+            _ => false,
+        }
+    }
+
+    /// Whether `root.member` names a dunder or method of an authored class, reached
+    /// through `self`, `cls` or the class name, or a class nested in an authored class.
+    fn authored_member(&self, root: &str, member: &str) -> bool {
+        if matches!(root, "self" | "cls") {
+            return dunder(member) || self.any_method(member);
+        }
+        self.methods
+            .get(root)
+            .is_some_and(|methods| dunder(member) || methods.contains(member) || self.class(member))
+    }
+}
+
+/// The object a Python workaround mutates: the first `setattr` argument, or the
+/// assignment target without its final attribute.
+fn mutated_object(matched: &str) -> &str {
+    matched.strip_prefix("setattr").map_or_else(
+        || {
+            let target = matched.split('=').next().unwrap_or_default().trim_end();
+            target.rsplit_once('.').map_or("", |(object, _)| object)
+        },
+        |arguments| {
+            let arguments = arguments.trim_start().trim_start_matches('(');
+            arguments.split(',').next().unwrap_or_default()
+        },
+    )
+}
+
+/// Whether a dotted Python assignment `a.b.name =` sets an attribute an authored
+/// class declares as assignable. A chain that starts at an imported name, such as
+/// `requests.Session.headers = ...`, reaches a library object and still counts.
+fn authored_attribute_assignment(
+    matched: &str,
+    authored: &BTreeSet<String>,
+    imported: &BTreeSet<String>,
+) -> bool {
+    if matched.starts_with("setattr") || matched.contains(".prototype.") {
+        return false;
+    }
+    let target = matched.split('=').next().unwrap_or_default().trim_end();
+    let root = target.split('.').next().unwrap_or_default().trim();
+    !imported.contains(root)
+        && target
+            .rsplit('.')
+            .next()
+            .is_some_and(|attribute| authored.contains(attribute.trim()))
+}
+
+/// The names a Python file binds by importing a library: `import a.b` binds `a`,
+/// `import a as b` and `from m import a as b` bind `b`. A relative import, or one
+/// whose top-level module is in `authored`, binds the project's own code.
+fn python_imported_names(
+    path: &str,
+    source: &str,
+    authored: &BTreeSet<String>,
+) -> Result<BTreeSet<String>, String> {
+    let library = |module: &str| {
+        let root = module.trim().split('.').next().unwrap_or_default();
+        !root.is_empty() && !authored.contains(root)
+    };
+    let mut names = BTreeSet::new();
+    for statement in import_statements(path, source)? {
+        let statement = statement.split('#').next().unwrap_or_default();
+        match statement.trim().strip_prefix("from ") {
+            Some(rest) => {
+                let (module, bound) = rest.split_once(" import ").unwrap_or_default();
+                if library(module) {
+                    names.extend(bound.split(',').map(python_bound_name).map(str::to_string));
+                }
+            }
+            None => names.extend(
+                statement
+                    .trim()
+                    .strip_prefix("import ")
+                    .unwrap_or_default()
+                    .split(',')
+                    .filter(|item| {
+                        library(
+                            item.trim_matches(|c: char| c.is_whitespace() || "()\\".contains(c)),
+                        )
+                    })
+                    .map(python_bound_name)
+                    .map(str::to_string),
+            ),
+        }
+    }
+    Ok(names)
+}
+
+/// The top-level modules the scanned Python files belong to: the outermost
+/// package directory (one holding `__init__.py`) above a file, or the file itself
+/// when its directory is not a package.
+fn python_authored_modules(files: &BTreeMap<String, String>) -> BTreeSet<String> {
+    let package =
+        |directory: &Path| files.contains_key(&format!("{}/__init__.py", directory.display()));
+    files
+        .keys()
+        .map(Path::new)
+        .filter(|path| path.extension().is_some_and(|extension| extension == "py"))
+        .filter_map(|path| {
+            let top = path
+                .ancestors()
+                .skip(1)
+                .take_while(|directory| !directory.as_os_str().is_empty() && package(directory))
+                .last();
+            match top {
+                Some(directory) => directory.file_name(),
+                None => path.file_stem(),
+            }
+            .and_then(|name| name.to_str())
+            .map(str::to_string)
+        })
+        .collect()
+}
+
+/// The name one imported item binds: its alias, or else its first dotted part
+/// (the item itself after `from`, which never has dots).
+fn python_bound_name(item: &str) -> &str {
+    let item = item.trim_matches(|c: char| c.is_whitespace() || "()\\".contains(c));
+    match item.split_once(" as ") {
+        Some((_, alias)) => alias.trim(),
+        None => item.split('.').next().unwrap_or_default(),
+    }
+}
+
 pub(super) fn library_capabilities(
     rule: &Rule,
     model: &SourceModel,
@@ -901,6 +1139,13 @@ pub(super) fn library_capabilities(
         return Ok(rust_library_capabilities(model));
     }
     let typescript = rule_language(rule) == "typescript";
+    let authored = if typescript {
+        BTreeSet::new()
+    } else {
+        authored_settable_attributes(model)
+    };
+    let classes = AuthoredClasses::new(model);
+    let authored_modules = python_authored_modules(&input.files);
     let workaround = workaround_expression();
     let mut observations = Vec::new();
     for (path, source) in &input.files {
@@ -915,8 +1160,17 @@ pub(super) fn library_capabilities(
         let imported = typescript
             .then(|| typescript_imported_names(path, source, &code))
             .transpose()?;
+        let python_imported = if typescript {
+            BTreeSet::new()
+        } else {
+            python_imported_names(path, source, &authored_modules)?
+        };
         let failures = failures
             .filter(|failure| library_target(failure.as_str(), imported.as_ref()))
+            .filter(|failure| {
+                !authored_attribute_assignment(failure.as_str(), &authored, &python_imported)
+            })
+            .filter(|failure| typescript || !classes.target(failure.as_str(), &python_imported))
             .collect::<Vec<_>>();
         if let Some(first) = failures.first() {
             observations.push(observation(
@@ -925,7 +1179,7 @@ pub(super) fn library_capabilities(
                 [("failures", failures.len() as u64)],
                 json!({
                     "collector": "authored_library_extension_workaround_v1",
-                    "scope": "prototype or imported/foreign attribute mutation and setattr on a non-receiver; optional capability tests may replace this evidence",
+                    "scope": "prototype or imported/foreign attribute mutation and setattr on a non-receiver; Python mutations of an authored class object or its methods are excluded; optional capability tests may replace this evidence",
                 }),
             ));
         }
@@ -1172,6 +1426,9 @@ mod tests {
             "let realpath: typeof vendor.realpathSync.native = native;\n",
             "let check: vendor.core.Check = check;\n",
             "document.documentElement.dataset.state = 'ready';\n",
+            "process.env.NODE_ENV = 'production';\n",
+            "process.stdout.write = write;\n",
+            "process.stdout.columns = 80;\n",
             "import * as vendor from 'vendor';\n",
         );
         let observations = library_capabilities(
@@ -1184,7 +1441,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(observations.len(), 1);
-        assert_eq!(observations[0].measurements["failures"], 3);
+        assert_eq!(observations[0].measurements["failures"], 5);
         assert_eq!(observations[0].location.line, 3);
     }
 
@@ -1587,6 +1844,230 @@ impl Wake for LocalWaker { fn wake(self) {} }
         assert_eq!(observations.len(), 1);
         assert_eq!(observations[0].measurements["failures"], 3);
         assert_eq!(observations[0].location.line, 5);
+    }
+
+    #[test]
+    fn python_assignments_through_authored_setters_and_fields_are_not_workarounds() {
+        let models = concat!(
+            "class Response:\n",
+            "    timeout: float\n",
+            "    @property\n",
+            "    def elapsed(self):\n",
+            "        return self._elapsed\n",
+            "    @elapsed.setter\n",
+            "    def elapsed(self, value):\n",
+            "        self._elapsed = value\n",
+        );
+        let client = concat!(
+            "def send(self):\n",
+            "    self._response.elapsed = 1\n",
+            "    self._response.config.timeout = 2\n",
+            "    requests.adapters.DEFAULT_RETRIES = 5\n",
+            "    setattr(requests.Response, 'elapsed', 3)\n",
+        );
+        let input = Input::fixture(
+            "python-v1",
+            BTreeMap::from([
+                ("src/models.py".to_string(), models.to_string()),
+                ("src/client.py".to_string(), client.to_string()),
+            ]),
+        );
+        let rule = rule("python.library_capabilities");
+        let model = super::super::model::source_model(&rule, &input).unwrap();
+        let observations = library_capabilities(&rule, &model, &input).unwrap();
+        assert_eq!(observations.len(), 1);
+        assert_eq!(observations[0].measurements["failures"], 2);
+        assert_eq!(observations[0].location.line, 4);
+        assert!(!authored_attribute_assignment(
+            "a.prototype.elapsed = ",
+            &BTreeSet::from(["elapsed".to_string()]),
+            &BTreeSet::new()
+        ));
+    }
+
+    #[test]
+    fn python_mutations_through_imports_properties_and_other_classes_count() {
+        let source = concat!(
+            "import requests\n",
+            "import urllib3.util as retry_util\n",
+            "import os.path\n",
+            "from http import client as http_client, cookies\n",
+            "class Client:\n",
+            "    headers: dict\n",
+            "    @property\n",
+            "    def session(self):\n",
+            "        return self._session\n",
+            "    @functools.cached_property\n",
+            "    async def pool(self):\n",
+            "        return self._pool\n",
+            "    def send(self):\n",
+            "        pass\n",
+            "class Other:\n",
+            "    def close(self):\n",
+            "        pass\n",
+            "def patch(self):\n",
+            "    requests.Session.headers = {}\n",
+            "    retry_util.Retry.headers = {}\n",
+            "    http_client.HTTPConnection.headers = {}\n",
+            "    cookies.SimpleCookie.headers = {}\n",
+            "    os.path.headers = {}\n",
+            "    self.session.trust_env = False\n",
+            "    self.pool.size = 1\n",
+            "    Client.close.cache = {}\n",
+            "    self.send.cache = {}\n",
+            "    Other.close.cache = {}\n",
+            "    self.config.headers = {}\n",
+        );
+        let input = Input::fixture(
+            "python-v1",
+            BTreeMap::from([("src/client.py".to_string(), source.to_string())]),
+        );
+        let rule = rule("python.library_capabilities");
+        let model = super::super::model::source_model(&rule, &input).unwrap();
+        let observations = library_capabilities(&rule, &model, &input).unwrap();
+        assert_eq!(observations.len(), 1);
+        assert_eq!(observations[0].measurements["failures"], 8);
+        assert_eq!(observations[0].location.line, 19);
+    }
+
+    #[test]
+    fn python_imports_of_the_project_itself_do_not_reach_a_library() {
+        let files = BTreeMap::from([
+            ("src/flask/__init__.py".to_string(), String::new()),
+            (
+                "src/flask/sessions.py".to_string(),
+                concat!(
+                    "class SessionMixin:\n",
+                    "    @permanent.setter\n",
+                    "    def permanent(self, value):\n",
+                    "        pass\n",
+                )
+                .to_string(),
+            ),
+            ("src/flask/json/__init__.py".to_string(), String::new()),
+            ("tests/helpers.py".to_string(), String::new()),
+            (
+                "tests/test_basic.py".to_string(),
+                concat!(
+                    "import requests, \\\n    flask\n",
+                    "import flask.json as fj\n",
+                    "from flask import json\n",
+                    "from . import helpers\n",
+                    "from helpers import app\n",
+                    "from requests import Session as S\n",
+                    "def test():\n",
+                    "    flask.session.permanent = True\n",
+                    "    fj.provider.permanent = True\n",
+                    "    json.provider.permanent = True\n",
+                    "    helpers.app.permanent = True\n",
+                    "    app.config.permanent = True\n",
+                    "    requests.Session.permanent = True\n",
+                    "    S.adapter.permanent = True\n",
+                )
+                .to_string(),
+            ),
+        ]);
+        assert_eq!(
+            super::python_authored_modules(&files)
+                .into_iter()
+                .collect::<Vec<_>>(),
+            ["flask", "helpers", "test_basic"]
+        );
+        let input = Input::fixture("python-v1", files);
+        let rule = rule("python.library_capabilities");
+        let model = super::super::model::source_model(&rule, &input).unwrap();
+        let observations = library_capabilities(&rule, &model, &input).unwrap();
+        assert_eq!(observations.len(), 1);
+        assert_eq!(observations[0].measurements["failures"], 2);
+        assert_eq!(observations[0].location.line, 14);
+    }
+
+    #[test]
+    fn typescript_relative_imports_bind_project_code_not_libraries() {
+        let source = concat!(
+            "import { config } from './config';\n",
+            "import * as util from \"../util\";\n",
+            "import express from 'express';\n",
+            "const local = require('./local');\n",
+            "const lib = require(\"lib\");\n",
+            "const dynamic = require(name);\n",
+        );
+        let names = typescript_imported_names("a.ts", source, source).unwrap();
+        assert_eq!(
+            names.into_iter().collect::<Vec<_>>(),
+            ["dynamic", "express", "lib"]
+        );
+    }
+
+    #[test]
+    fn python_mutations_of_authored_classes_are_not_workarounds() {
+        let source = concat!(
+            "class codes(IntEnum):\n",
+            "    OK = 200\n",
+            "class Foo:\n",
+            "    def __rich_repr__(self):\n",
+            "        yield 1\n",
+            "    def render(self):\n",
+            "        pass\n",
+            "    class Thing:\n",
+            "        pass\n",
+            "for code in codes:\n",
+            "    setattr(codes, code.name, int(code))\n",
+            "Foo.Thing.__doc__ = 'text'\n",
+            "Foo.__rich_repr__.angular = True\n",
+            "def decorate(cls):\n",
+            "    cls.__rich_repr__.angular = True\n",
+            "    self.session.headers = {}\n",
+            "    Foo.client.timeout = 3\n",
+            "    requests.Session.send = send\n",
+            "    setattr(requests, 'get', get)\n",
+            "    Foo.render.cache = {}\n",
+            "    cls.__init__.__signature__ = signature\n",
+            "    cls.__module__.flag = True\n",
+            "    cls.____.flag = True\n",
+            "    cls.__cache.flag = True\n",
+        );
+        let input = Input::fixture(
+            "python-v1",
+            BTreeMap::from([("src/repr.py".to_string(), source.to_string())]),
+        );
+        let rule = rule("python.library_capabilities");
+        let model = super::super::model::source_model(&rule, &input).unwrap();
+        let observations = library_capabilities(&rule, &model, &input).unwrap();
+        assert_eq!(observations.len(), 1);
+        assert_eq!(observations[0].measurements["failures"], 6);
+        assert_eq!(observations[0].location.line, 16);
+    }
+
+    #[test]
+    fn python_mutations_of_imported_classes_count_despite_a_same_named_authored_class() {
+        let tutorial = concat!(
+            "class FormData(BaseModel):\n",
+            "    def render(self):\n",
+            "        pass\n",
+        );
+        let test = concat!(
+            "from starlette.datastructures import FormData\n",
+            "def test_items(monkeypatch):\n",
+            "    monkeypatch.setattr(FormData, '__init__', track_items)\n",
+            "    FormData.render.cache = {}\n",
+            "    setattr(Local, 'flag', True)\n",
+            "class Local:\n",
+            "    pass\n",
+        );
+        let input = Input::fixture(
+            "python-v1",
+            BTreeMap::from([
+                ("docs_src/forms.py".to_string(), tutorial.to_string()),
+                ("tests/test_forms.py".to_string(), test.to_string()),
+            ]),
+        );
+        let rule = rule("python.library_capabilities");
+        let model = super::super::model::source_model(&rule, &input).unwrap();
+        let observations = library_capabilities(&rule, &model, &input).unwrap();
+        assert_eq!(observations.len(), 1);
+        assert_eq!(observations[0].measurements["failures"], 2);
+        assert_eq!(observations[0].location.line, 3);
     }
 
     #[test]

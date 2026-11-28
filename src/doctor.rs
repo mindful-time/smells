@@ -19,7 +19,7 @@ use crate::{
         model::{CapturedInput, History},
     },
     coverage, input,
-    policy::SelectionOptions,
+    policy::{self, SelectionOptions},
     report::{Finding, Report},
     suppressions::{self, ParsedSuppressions},
 };
@@ -34,12 +34,6 @@ const STANDARD_POLICY_FILES: [&str; 5] = [
     "smells-policy.json",
 ];
 const DEFAULT_BASE_REFS: [&str; 2] = ["origin/main", "origin/master"];
-/// Conventional LCOV outputs of `cargo llvm-cov`, `pytest-cov` and `vitest`/`jest`.
-const COVERAGE_FILES: [&str; 3] = [
-    "lcov.info",
-    "coverage/lcov.info",
-    "target/llvm-cov/lcov.info",
-];
 const HISTORY_WINDOW: usize = 200;
 const HOTSPOT_LIMIT: usize = 5;
 
@@ -76,6 +70,8 @@ pub(crate) struct DoctorReport {
     pub checks: Vec<Check>,
     pub diagnostics: Option<Diagnostics>,
     pub burndown: Option<Burndown>,
+    /// Commands to run next, in order; empty when an error must be fixed first.
+    pub next_steps: Vec<String>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -151,13 +147,21 @@ impl CrapView {
     }
 }
 
+/// Scores findings per scanned file, so codebases of different sizes compare fairly:
+/// every blocking finding per 100 files costs a point (at least one, at most 75), and
+/// every review signal per 20 files costs a point (at most 25). A codebase under 10
+/// files counts as 10, so one finding in a tiny project does not read as critical.
 pub(crate) fn health_score(
     scanned_files: usize,
     blocking_findings: usize,
     review_signals: usize,
 ) -> u8 {
-    let blocking_penalty = blocking_findings.saturating_mul(10).min(75);
-    let review_penalty = (review_signals / scanned_files.max(1)).min(25);
+    let files = scanned_files.max(10);
+    let blocking_penalty = blocking_findings
+        .saturating_mul(100)
+        .div_ceil(files)
+        .min(75);
+    let review_penalty = (review_signals.saturating_mul(5) / files).min(25);
     100u8.saturating_sub(u8::try_from(blocking_penalty + review_penalty).unwrap_or(u8::MAX))
 }
 
@@ -231,6 +235,18 @@ fn resolve_policy(root: &Path, explicit: Option<&Path>) -> Result<ResolvedPolicy
     }
 }
 
+/// The language (`rust`, `python` or `typescript`) of the policy `diagnose` would use,
+/// or `None` when no single policy resolves and parses.
+pub(crate) fn policy_language(root: &Path, explicit: Option<&Path>) -> Option<String> {
+    let text = match resolve_policy(root, explicit).ok()? {
+        ResolvedPolicy::File(path) => fs::read_to_string(path).ok()?,
+        ResolvedPolicy::BuiltIn { text, .. } => text.to_string(),
+    };
+    policy::registry_for_policy(&text)
+        .ok()
+        .map(|registry| registry.language)
+}
+
 fn infer_starter_policy(root: &Path) -> Result<ResolvedPolicy, String> {
     let candidates: [(&[&str], &str, &str); 3] = [
         (&["Cargo.toml"], "rust-v1", RUST_STARTER_POLICY),
@@ -288,9 +304,9 @@ pub(crate) fn diagnose(
 ) -> DoctorReport {
     let mut checks = Vec::new();
     let resolved = resolve_policy(root, policy_path);
-    let owned_policy_target = match &resolved {
-        Ok(ResolvedPolicy::File(path)) => relative_policy_path(root, path),
-        _ => "quality-policy.json".into(),
+    let policy_file = match &resolved {
+        Ok(ResolvedPolicy::File(path)) => path.clone(),
+        _ => root.join("quality-policy.json"),
     };
     let (diagnostics, burndown) = match &resolved {
         Ok(policy_source) => {
@@ -305,27 +321,270 @@ pub(crate) fn diagnose(
             (None, None)
         }
     };
-    append_governance_checks(root, &owned_policy_target, &mut checks);
+    append_governance_checks(root, &policy_file, &mut checks);
+    let next_steps = match (&resolved, &diagnostics) {
+        (Ok(policy_source), Some(_)) => next_steps(root, policy_source, burndown.as_ref(), &checks),
+        (Err(_), _) => missing_policy_steps(root),
+        _ => Vec::new(),
+    };
     DoctorReport {
         checks,
         diagnostics,
         burndown,
+        next_steps,
     }
 }
 
-fn append_governance_checks(root: &Path, owned_policy_target: &str, checks: &mut Vec<Check>) {
-    let read = |name: &str| fs::read_to_string(root.join(name)).ok();
-    checks.push(agents_check(read("AGENTS.md").as_deref()));
-    checks.push(claude_check(read("CLAUDE.md").as_deref()));
-    let codeowners = CODEOWNERS_PATHS
+/// The starter policy file for a rule pack, as published in `examples/`.
+fn starter_policy_file(rule_pack: &str) -> &'static str {
+    match rule_pack {
+        "python-v1" => "python-quality-policy.json",
+        "typescript-v1" => "typescript-quality-policy.json",
+        _ => "quality-policy.json",
+    }
+}
+
+/// `text` as one shell word, single-quoted unless every character is safe unquoted,
+/// so a printed command still works when a path holds a space or a quote.
+fn shell_word(text: &str) -> String {
+    let safe =
+        |character: char| character.is_ascii_alphanumeric() || "/._-:\\+@=,".contains(character);
+    if !text.is_empty() && text.chars().all(safe) {
+        text.to_owned()
+    } else {
+        format!("'{}'", text.replace('\'', r"'\''"))
+    }
+}
+
+/// `path` as one shell word.
+fn shell_path(path: &Path) -> String {
+    shell_word(&path.display().to_string())
+}
+
+/// A command that saves the starter policy for `rule_pack` as `target`.
+fn starter_policy_command(rule_pack: &str, target: &Path) -> String {
+    format!(
+        "curl -fsSLo {} https://raw.githubusercontent.com/mindful-time/smells/v{}/examples/{}",
+        shell_path(target),
+        env!("CARGO_PKG_VERSION"),
+        starter_policy_file(rule_pack)
+    )
+}
+
+/// How to add a policy when `smells check` finds none in `root`: the starter for the
+/// inferred language, or a pointer to `smells doctor` when the language is ambiguous.
+pub(crate) fn missing_policy_hint(root: &Path) -> String {
+    let target = root.join("quality-policy.json");
+    match infer_starter_policy(root) {
+        Ok(ResolvedPolicy::BuiltIn { rule_pack, .. }) => format!(
+            "save the {rule_pack} starter policy with `{}`, or run `smells doctor` to try smells without one",
+            starter_policy_command(rule_pack, &target)
+        ),
+        _ => match starter_subprojects(root).as_slice() {
+            [] => "pass --policy FILE, or run `smells doctor` to see the starter policies".into(),
+            found @ [(first, _), ..] => format!(
+                "no single starter policy fits this folder, but it holds {}; run `smells doctor --path {}` to set one up",
+                found
+                    .iter()
+                    .map(|(name, rule_pack)| format!("{name} ({rule_pack})"))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                shell_path(&subfolder(root, first))
+            ),
+        },
+    }
+}
+
+/// Immediate, non-hidden subfolders whose manifest picks a starter policy, as in a
+/// monorepo with `backend/Cargo.toml` and `frontend/package.json`.
+fn starter_subprojects(root: &Path) -> Vec<(String, &'static str)> {
+    let Ok(entries) = fs::read_dir(root) else {
+        return Vec::new();
+    };
+    let mut found: Vec<_> = entries
+        .filter_map(Result::ok)
+        .filter_map(|entry| {
+            let name = entry.file_name().into_string().ok()?;
+            if name.starts_with('.') {
+                return None;
+            }
+            match infer_starter_policy(&entry.path()) {
+                Ok(ResolvedPolicy::BuiltIn { rule_pack, .. }) => Some((name, rule_pack)),
+                _ => None,
+            }
+        })
+        .collect();
+    found.sort();
+    found
+}
+
+/// `name` under `root`, written without a leading `./` when `root` is the current folder.
+fn subfolder(root: &Path, name: &str) -> PathBuf {
+    if root == Path::new(".") {
+        PathBuf::from(name)
+    } else {
+        root.join(name)
+    }
+}
+
+/// What to run when doctor finds no policy and cannot pick a starter: doctor on each
+/// subproject a manifest identifies, or else the starter command for every language.
+/// Several policy files at once need `--policy`, which the policy check already says.
+fn missing_policy_steps(root: &Path) -> Vec<String> {
+    if STANDARD_POLICY_FILES
         .iter()
-        .find_map(|path| read(path).map(|text| (*path, text)));
-    checks.push(codeowners_check(
-        codeowners
-            .as_ref()
-            .map(|(path, text)| (*path, text.as_str())),
-        owned_policy_target,
-    ));
+        .any(|name| root.join(name).is_file())
+    {
+        return Vec::new();
+    }
+    let subprojects = starter_subprojects(root);
+    if subprojects.is_empty() {
+        let target = root.join("quality-policy.json");
+        return [
+            ("Rust", "rust-v1"),
+            ("Python", "python-v1"),
+            ("TypeScript", "typescript-v1"),
+        ]
+        .into_iter()
+        .map(|(language, rule_pack)| {
+            format!(
+                "for {language} code: {}",
+                starter_policy_command(rule_pack, &target)
+            )
+        })
+        .collect();
+    }
+    subprojects
+        .iter()
+        .map(|(name, _)| {
+            format!(
+                "smells doctor --path {}",
+                shell_path(&subfolder(root, name))
+            )
+        })
+        .collect()
+}
+
+fn next_steps(
+    root: &Path,
+    policy_source: &ResolvedPolicy,
+    burndown: Option<&Burndown>,
+    checks: &[Check],
+) -> Vec<String> {
+    let mut steps = Vec::new();
+    if let ResolvedPolicy::BuiltIn { rule_pack, .. } = policy_source {
+        steps.push(starter_policy_command(
+            rule_pack,
+            &root.join("quality-policy.json"),
+        ));
+    }
+    // A check that would exit 2 is not a next step; the error has to be fixed first.
+    let errors = checks
+        .iter()
+        .filter(|check| check.status == Status::Error)
+        .collect::<Vec<_>>();
+    if !errors.is_empty() {
+        steps.push(
+            if errors.iter().any(|check| check.id == "scan") {
+                "fix the errors above (exclude intentionally broken files, such as parser \
+             fixtures, with exclude_directories in quality-policy.json), then rerun smells doctor"
+            } else {
+                "fix the errors above, then rerun smells doctor"
+            }
+            .into(),
+        );
+        return steps;
+    }
+    let mut check = String::from("smells check");
+    if root != Path::new(".") {
+        let _ = write!(check, " --path {}", shell_path(root));
+    }
+    // `smells check` finds only quality-policy.json on its own.
+    if let ResolvedPolicy::File(path) = policy_source
+        && !same_file(path, &root.join("quality-policy.json"))
+    {
+        let _ = write!(check, " --policy {}", shell_path(path));
+    }
+    if let Some(burndown) = burndown {
+        let _ = write!(check, " --base {}", shell_word(&burndown.base_ref));
+    }
+    steps.push(check);
+    steps
+}
+
+/// Whether two paths name the same file, compared as written when either is missing.
+fn same_file(left: &Path, right: &Path) -> bool {
+    match (fs::canonicalize(left), fs::canonicalize(right)) {
+        (Ok(left), Ok(right)) => left == right,
+        _ => left == right,
+    }
+}
+
+/// `path` made absolute through its folder, so a policy file that does not exist yet
+/// still resolves.
+fn absolute_file(path: &Path) -> Option<PathBuf> {
+    let path = std::path::absolute(path).ok()?;
+    let existing = path.ancestors().find_map(|folder| {
+        let canonical = fs::canonicalize(folder).ok()?;
+        Some((folder, canonical))
+    })?;
+    let (folder, canonical) = existing;
+    Some(canonical.join(path.strip_prefix(folder).ok()?))
+}
+
+/// Agent instructions apply from the nearest folder that has them, up to the Git
+/// repository root, and GitHub reads CODEOWNERS only at that root, against paths
+/// relative to it.
+fn append_governance_checks(root: &Path, policy_file: &Path, checks: &mut Vec<Check>) {
+    let folders = repository_folders(root);
+    let nearest = |name: &str| {
+        folders
+            .iter()
+            .find_map(|folder| fs::read_to_string(folder.join(name)).ok())
+    };
+    checks.push(agents_check(nearest("AGENTS.md").as_deref()));
+    checks.push(claude_check(nearest("CLAUDE.md").as_deref()));
+    let repository = folders.last().expect("the scanned folder is listed");
+    let codeowners = CODEOWNERS_PATHS.iter().find_map(|path| {
+        fs::read_to_string(repository.join(path))
+            .ok()
+            .map(|text| (*path, text))
+    });
+    let policy_target = absolute_file(policy_file)
+        .and_then(|policy| Some(policy.strip_prefix(repository).ok()?.to_path_buf()))
+        .map(|policy| policy.to_string_lossy().replace('\\', "/"));
+    let codeowners = codeowners
+        .as_ref()
+        .map(|(path, text)| (*path, text.as_str()));
+    checks.push(match policy_target {
+        Some(target) => codeowners_check(codeowners, &target),
+        None => check(
+            "codeowners",
+            Status::Warn,
+            format!(
+                "{} is outside the repository, so CODEOWNERS cannot assign it an owner",
+                policy_file.display()
+            ),
+        ),
+    });
+}
+
+/// The folders from `root` up to the Git repository root that holds it, nearest first,
+/// or only `root` outside a repository.
+fn repository_folders(root: &Path) -> Vec<PathBuf> {
+    let start = fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+    let Some(top) = crate::input::repository_root_of(&start)
+        .ok()
+        .and_then(|top| fs::canonicalize(top).ok())
+        .filter(|top| start.starts_with(top))
+    else {
+        return vec![start];
+    };
+    start
+        .ancestors()
+        .take_while(|folder| folder.starts_with(&top))
+        .map(Path::to_path_buf)
+        .collect()
 }
 
 #[derive(Clone, Copy)]
@@ -377,13 +636,6 @@ fn diagnose_inputs(
     (Some(diagnostics), burndown)
 }
 
-fn discover_coverage(root: &Path) -> Option<PathBuf> {
-    COVERAGE_FILES
-        .iter()
-        .map(|name| root.join(name))
-        .find(|path| path.is_file())
-}
-
 /// Loads explicit or conventional LCOV into the captured input. A coverage file that is
 /// present but unusable is an error rather than a silent fallback to the upper bound.
 fn attach_coverage(
@@ -394,7 +646,7 @@ fn attach_coverage(
 ) -> Option<String> {
     let path = explicit
         .map(Path::to_path_buf)
-        .or_else(|| discover_coverage(root))?;
+        .or_else(|| coverage::discover(root))?;
     let label = relative_policy_path(root, &path);
     match coverage::load(&path, root, &captured.input.files) {
         Ok(loaded) => {
@@ -420,21 +672,31 @@ fn coverage_hint(language: &str) -> &'static str {
     }
 }
 
+/// Names the estimates still hidden for scanned files the LCOV omits, so the doctor
+/// totals reconcile with `smells check`, which reports them.
+fn measured_coverage_detail(file: &str, covered: usize, hidden: usize) -> String {
+    let detail =
+        format!("{file} covers {covered} scanned file(s); CRAP scores use measured line coverage");
+    if hidden == 0 {
+        return detail;
+    }
+    format!(
+        "{detail}; hid {hidden} non-blocking CRAP estimate(s) in files it does not cover, which `smells check` still reports"
+    )
+}
+
 fn coverage_check(file: Option<&str>, captured: &CapturedInput, hidden: usize) -> Check {
     match (file, captured.input.coverage.as_ref()) {
         (Some(file), Some(coverage)) => check(
             "coverage",
             Status::Ok,
-            format!(
-                "{file} covers {} scanned file(s); CRAP scores use measured line coverage",
-                coverage.files.len()
-            ),
+            measured_coverage_detail(file, coverage.files.len(), hidden),
         ),
         _ => check(
             "coverage",
             Status::Warn,
             format!(
-                "no LCOV coverage found; hid {hidden} non-blocking CRAP estimate(s) that assume 0% coverage. Run `{}` or pass --coverage FILE",
+                "no LCOV coverage found; hid {hidden} non-blocking CRAP estimate(s) that assume 0% coverage. Run `{}` (doctor and check offer to run it at a terminal) or pass --coverage FILE",
                 coverage_hint(&captured.registry.language)
             ),
         ),
@@ -680,7 +942,8 @@ pub(crate) fn diagnostics_from_report(report: &Report, view: CrapView) -> Diagno
         blocking_findings,
         ignored_findings,
         review_signals,
-        matched_smells: report.summary.matched_smell_patterns,
+        // Count the rows the smell table shows, so a hidden CRAP estimate is not counted.
+        matched_smells: smells.len(),
         total_smells: report.summary.total_smell_patterns,
         estimated_crap_hidden,
         smells,
@@ -1016,7 +1279,7 @@ pub(crate) fn to_json(report: &DoctorReport) -> Value {
         })
     });
     json!({
-        "status": if exit_code(&report.checks) == 0 { "healthy" } else { "unhealthy" },
+        "status": if exit_code(&report.checks) == 0 { "checks_passed" } else { "checks_failed" },
         "exit_code": exit_code(&report.checks),
         "checks": report
             .checks
@@ -1025,6 +1288,7 @@ pub(crate) fn to_json(report: &DoctorReport) -> Value {
             .collect::<Vec<_>>(),
         "diagnostics": diagnostics,
         "burndown": burndown,
+        "next_steps": report.next_steps,
     })
 }
 
@@ -1122,7 +1386,18 @@ pub(crate) fn to_table(report: &DoctorReport, color: bool) -> String {
     if let Some(burndown) = &report.burndown {
         append_burndown_table(&mut output, burndown, palette);
     }
+    append_next_steps(&mut output, &report.next_steps, palette);
     output
+}
+
+fn append_next_steps(output: &mut String, steps: &[String], palette: Palette) {
+    if steps.is_empty() {
+        return;
+    }
+    let _ = write!(output, "\n{}\n", palette.paint("1", "Next steps"));
+    for (index, step) in steps.iter().enumerate() {
+        let _ = writeln!(output, "  {}. {step}", index + 1);
+    }
 }
 
 fn append_diagnostics_table(output: &mut String, diagnostics: &Diagnostics, palette: Palette) {
@@ -1472,6 +1747,19 @@ mod tests {
     }
 
     #[test]
+    fn printed_paths_are_quoted_only_when_the_shell_would_split_them() {
+        assert_eq!(
+            shell_word("app/quality-policy.json"),
+            "app/quality-policy.json"
+        );
+        assert_eq!(shell_word(r"C:\repo\app"), r"C:\repo\app");
+        assert_eq!(shell_word("my app"), "'my app'");
+        assert_eq!(shell_word("it's"), r"'it'\''s'");
+        assert_eq!(shell_word("$HOME"), "'$HOME'");
+        assert_eq!(shell_word(""), "''");
+    }
+
+    #[test]
     fn policy_paths_are_reported_relative_to_the_source_root() {
         assert_eq!(
             relative_policy_path(Path::new("."), Path::new("examples/quality-policy.json")),
@@ -1492,12 +1780,13 @@ mod tests {
             ],
             diagnostics: None,
             burndown: None,
+            next_steps: Vec::new(),
         };
         assert_eq!(exit_code(&warned.checks), 0);
         assert_eq!(
             to_json(&warned),
             json!({
-                "status": "healthy",
+                "status": "checks_passed",
                 "exit_code": 0,
                 "checks": [
                     {"id": "a", "status": "ok", "detail": "fine"},
@@ -1505,6 +1794,7 @@ mod tests {
                 ],
                 "diagnostics": null,
                 "burndown": null,
+                "next_steps": [],
             })
         );
         assert_eq!(
@@ -1521,9 +1811,10 @@ mod tests {
             checks: vec![check("c", Status::Error, "broken")],
             diagnostics: None,
             burndown: None,
+            next_steps: Vec::new(),
         };
         assert_eq!(exit_code(&failed.checks), 2);
-        assert_eq!(to_json(&failed)["status"], "unhealthy");
+        assert_eq!(to_json(&failed)["status"], "checks_failed");
         assert_eq!(to_json(&failed)["checks"][0]["status"], "error");
         assert!(to_table(&failed, true).contains("\x1b[31m✗\x1b[0m"));
     }
@@ -1532,16 +1823,23 @@ mod tests {
     fn health_score_and_grade_cover_every_band_and_cap() {
         assert_eq!(health_score(0, 0, 0), 100);
         assert_eq!(health_grade(100), "Great");
-        assert_eq!(health_score(10, 0, 20), 98);
-        assert_eq!(health_score(1, 0, 30), 75);
+        assert_eq!(health_score(10, 0, 20), 90);
+        assert_eq!(health_score(1, 0, 30), 85);
+        assert_eq!(health_score(1, 1, 0), 90);
+        assert_eq!(health_score(10, 0, 50), 75);
         assert_eq!(health_grade(75), "Great");
-        assert_eq!(health_score(1, 2, 6), 74);
+        // One blocking finding always costs a point, however large the codebase.
+        assert_eq!(health_score(1000, 1, 0), 99);
+        // The same density scores the same at any size.
+        assert_eq!(health_score(1000, 100, 0), 90);
+        assert_eq!(health_score(100, 10, 0), 90);
+        assert_eq!(health_score(100, 26, 0), 74);
         assert_eq!(health_grade(74), "Needs work");
-        assert_eq!(health_score(1, 5, 0), 50);
+        assert_eq!(health_score(100, 50, 0), 50);
         assert_eq!(health_grade(50), "Needs work");
-        assert_eq!(health_score(1, 5, 1), 49);
+        assert_eq!(health_score(100, 50, 20), 49);
         assert_eq!(health_grade(49), "Critical");
-        assert_eq!(health_score(1, 10, 40), 0);
+        assert_eq!(health_score(1, 10, 60), 0);
         assert_eq!(health_grade(0), "Critical");
         assert_eq!(score_color(75), "32");
         assert_eq!(score_color(50), "33");
@@ -1594,6 +1892,7 @@ mod tests {
                 }],
             }),
             burndown: None,
+            next_steps: Vec::new(),
         };
         let table = to_table(&report, false);
         assert!(
@@ -1645,6 +1944,7 @@ mod tests {
                 hotspots: Vec::new(),
             }),
             burndown: None,
+            next_steps: Vec::new(),
         };
         let clean_table = to_table(&clean, false);
         assert!(
@@ -1752,6 +2052,7 @@ mod tests {
             checks: vec![check("policy", Status::Ok, "ok")],
             diagnostics: Some(current),
             burndown: Some(burndown),
+            next_steps: Vec::new(),
         };
         let table = to_table(&report, false);
         assert!(
@@ -1839,6 +2140,49 @@ mod tests {
     }
 
     #[test]
+    fn measured_coverage_detail_names_estimates_in_uncovered_files() {
+        assert_eq!(
+            measured_coverage_detail("lcov.info", 48, 0),
+            "lcov.info covers 48 scanned file(s); CRAP scores use measured line coverage"
+        );
+        assert_eq!(
+            measured_coverage_detail("lcov.info", 48, 104),
+            "lcov.info covers 48 scanned file(s); CRAP scores use measured line coverage; hid 104 non-blocking CRAP estimate(s) in files it does not cover, which `smells check` still reports"
+        );
+    }
+
+    #[test]
+    fn policy_language_follows_the_policy_doctor_resolves() {
+        let dir =
+            std::env::temp_dir().join(format!("smells-doctor-language-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        // A maturin crate has both manifests, so only its policy names the language.
+        fs::write(dir.join("Cargo.toml"), "").unwrap();
+        fs::write(dir.join("pyproject.toml"), "").unwrap();
+        assert_eq!(policy_language(&dir, None), None);
+        fs::write(dir.join("quality-policy.json"), RUST_STARTER_POLICY).unwrap();
+        assert_eq!(policy_language(&dir, None).as_deref(), Some("rust"));
+        let python = dir.join("python.json");
+        fs::write(&python, PYTHON_STARTER_POLICY).unwrap();
+        assert_eq!(
+            policy_language(&dir, Some(&python)).as_deref(),
+            Some("python")
+        );
+        fs::write(&python, "not json").unwrap();
+        assert_eq!(policy_language(&dir, Some(&python)), None);
+        assert_eq!(policy_language(&dir, Some(&dir.join("missing.json"))), None);
+        let starter = dir.join("starter");
+        fs::create_dir_all(&starter).unwrap();
+        fs::write(starter.join("package.json"), "{}").unwrap();
+        assert_eq!(
+            policy_language(&starter, None).as_deref(),
+            Some("typescript")
+        );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn infer_starter_policy_and_record_base_error_handle_all_manifest_combinations() {
         let base_dir =
             std::env::temp_dir().join(format!("smells-doctor-infer-{}", std::process::id()));
@@ -1907,5 +2251,236 @@ mod tests {
         assert!(checks.is_empty());
         record_base_error(true, "bad ref".into(), &mut checks);
         assert_eq!(checks, vec![check("base_ref", Status::Error, "bad ref")]);
+    }
+
+    #[test]
+    fn governance_checks_search_up_to_the_repository_root() {
+        let base_dir =
+            std::env::temp_dir().join(format!("smells-doctor-governance-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base_dir);
+        let repository = base_dir.join("repo");
+        let backend = repository.join("backend");
+        fs::create_dir_all(backend.join("src")).unwrap();
+        let init = std::process::Command::new("git")
+            .args(["init", "--quiet"])
+            .current_dir(&repository)
+            .status()
+            .unwrap();
+        assert!(init.success());
+        fs::write(base_dir.join("CLAUDE.md"), "outside the repository\n").unwrap();
+        fs::write(repository.join("AGENTS.md"), "# Rules\n").unwrap();
+        fs::write(
+            repository.join("CODEOWNERS"),
+            "/backend/quality-policy.json @team\n",
+        )
+        .unwrap();
+        fs::write(backend.join("CODEOWNERS"), "* @nobody\n").unwrap();
+        let mut checks = Vec::new();
+        append_governance_checks(&backend, &backend.join("quality-policy.json"), &mut checks);
+        let details: Vec<_> = checks.iter().map(|check| check.detail.as_str()).collect();
+        assert_eq!(
+            details,
+            [
+                "AGENTS.md present",
+                "CLAUDE.md not present",
+                "CODEOWNERS assigns backend/quality-policy.json to @team",
+            ]
+        );
+        fs::write(backend.join("AGENTS.md"), "").unwrap();
+        let mut checks = Vec::new();
+        append_governance_checks(&backend, &backend.join("quality-policy.json"), &mut checks);
+        assert_eq!(checks[0].detail, "AGENTS.md is empty");
+
+        fs::write(repository.join("CODEOWNERS"), "/policies/ @owners\n").unwrap();
+        let mut checks = Vec::new();
+        let shared = repository.join("policies").join("backend.json");
+        // The policy folder does not exist yet; CODEOWNERS still owns the path.
+        append_governance_checks(&backend, &shared, &mut checks);
+        assert_eq!(
+            checks[2].detail,
+            "CODEOWNERS assigns policies/backend.json to @owners"
+        );
+        let mut checks = Vec::new();
+        let outside_policy = base_dir.join("policy.json");
+        append_governance_checks(&backend, &outside_policy, &mut checks);
+        assert_eq!(
+            checks[2],
+            check(
+                "codeowners",
+                Status::Warn,
+                format!(
+                    "{} is outside the repository, so CODEOWNERS cannot assign it an owner",
+                    outside_policy.display()
+                )
+            )
+        );
+
+        let outside = base_dir.join("outside").join("inner");
+        fs::create_dir_all(&outside).unwrap();
+        fs::write(base_dir.join("outside").join("AGENTS.md"), "# Rules\n").unwrap();
+        // Only the first folder is certain: the temporary folder may sit in a checkout.
+        assert_eq!(
+            repository_folders(&outside).first(),
+            Some(&fs::canonicalize(&outside).unwrap())
+        );
+        assert_eq!(
+            repository_folders(&base_dir.join("missing")),
+            vec![base_dir.join("missing")]
+        );
+        let _ = fs::remove_dir_all(&base_dir);
+    }
+
+    #[test]
+    fn missing_policy_steps_name_subprojects_or_every_starter() {
+        let base_dir =
+            std::env::temp_dir().join(format!("smells-doctor-monorepo-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base_dir);
+        let empty = base_dir.join("empty");
+        fs::create_dir_all(&empty).unwrap();
+        let steps = missing_policy_steps(&empty);
+        assert_eq!(steps.len(), 3);
+        assert!(steps[0].starts_with("for Rust code: curl "), "{steps:?}");
+        assert!(steps[1].ends_with("/examples/python-quality-policy.json"));
+        assert!(steps[2].starts_with("for TypeScript code: curl "));
+        fs::write(empty.join("smells-policy.json"), "{}").unwrap();
+        assert!(missing_policy_steps(&empty).is_empty());
+
+        let monorepo = base_dir.join("monorepo");
+        for (folder, manifest) in [
+            ("web", "package.json"),
+            ("api", "Cargo.toml"),
+            (".cache", "Cargo.toml"),
+            ("docs", "README.md"),
+        ] {
+            fs::create_dir_all(monorepo.join(folder)).unwrap();
+            fs::write(monorepo.join(folder).join(manifest), "").unwrap();
+        }
+        fs::write(monorepo.join("pyproject.toml.bak"), "").unwrap();
+        assert_eq!(
+            starter_subprojects(&monorepo),
+            vec![
+                ("api".to_string(), "rust-v1"),
+                ("web".to_string(), "typescript-v1"),
+            ]
+        );
+        assert_eq!(
+            missing_policy_steps(&monorepo),
+            vec![
+                format!("smells doctor --path {}", monorepo.join("api").display()),
+                format!("smells doctor --path {}", monorepo.join("web").display()),
+            ]
+        );
+        assert_eq!(
+            missing_policy_hint(&monorepo),
+            format!(
+                "no single starter policy fits this folder, but it holds api (rust-v1), web (typescript-v1); run `smells doctor --path {}` to set one up",
+                monorepo.join("api").display()
+            )
+        );
+        assert_eq!(subfolder(Path::new("."), "api"), PathBuf::from("api"));
+        assert!(starter_subprojects(&base_dir.join("missing")).is_empty());
+        assert_eq!(
+            diagnose(&monorepo, None, None, None).next_steps,
+            missing_policy_steps(&monorepo)
+        );
+        let _ = fs::remove_dir_all(&base_dir);
+    }
+
+    #[test]
+    fn starter_policy_hints_and_next_steps_name_the_exact_commands() {
+        let base_dir =
+            std::env::temp_dir().join(format!("smells-doctor-hints-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base_dir);
+        for (manifest, file) in [
+            ("Cargo.toml", "/examples/quality-policy.json"),
+            ("pyproject.toml", "/examples/python-quality-policy.json"),
+            ("package.json", "/examples/typescript-quality-policy.json"),
+        ] {
+            let dir = base_dir.join(manifest);
+            fs::create_dir_all(&dir).unwrap();
+            fs::write(dir.join(manifest), "").unwrap();
+            let hint = missing_policy_hint(&dir);
+            let target = dir.join("quality-policy.json");
+            assert!(
+                hint.contains(&format!("curl -fsSLo {} ", target.display())),
+                "{hint}"
+            );
+            assert!(
+                hint.contains(&format!("/v{}{file}`", env!("CARGO_PKG_VERSION"))),
+                "{hint}"
+            );
+        }
+        let unknown = base_dir.join("unknown");
+        fs::create_dir_all(&unknown).unwrap();
+        assert_eq!(
+            missing_policy_hint(&unknown),
+            "pass --policy FILE, or run `smells doctor` to see the starter policies"
+        );
+        let _ = fs::remove_dir_all(&base_dir);
+
+        let built_in = ResolvedPolicy::BuiltIn {
+            rule_pack: "python-v1",
+            text: "",
+        };
+        let burndown = Burndown {
+            base_ref: "origin/main".into(),
+            base_commit: String::new(),
+            base_score: 0,
+            current_score: 0,
+            score_delta: 0,
+            base_blocking: 0,
+            current_blocking: 0,
+            blocking_delta: 0,
+            base_review: 0,
+            current_review: 0,
+            review_delta: 0,
+            base_ignored: 0,
+            current_ignored: 0,
+            ignored_delta: 0,
+            smell_deltas: Vec::new(),
+        };
+        assert_eq!(
+            next_steps(Path::new("."), &built_in, Some(&burndown), &[]),
+            vec![
+                format!(
+                    "curl -fsSLo ./quality-policy.json https://raw.githubusercontent.com/mindful-time/smells/v{}/examples/python-quality-policy.json",
+                    env!("CARGO_PKG_VERSION")
+                ),
+                "smells check --base origin/main".to_string(),
+            ]
+        );
+        let file = ResolvedPolicy::File(PathBuf::from("app/quality-policy.json"));
+        let scan_error = [check("scan", Status::Error, "1 scan error(s)")];
+        let blocked = next_steps(Path::new("."), &built_in, Some(&burndown), &scan_error);
+        assert_eq!(blocked.len(), 2);
+        assert!(blocked[0].starts_with("curl "));
+        assert!(blocked[1].contains("exclude_directories"), "{blocked:?}");
+        let base_error = [check("base_ref", Status::Error, "unknown revision")];
+        assert_eq!(
+            next_steps(Path::new("app"), &file, None, &base_error),
+            vec!["fix the errors above, then rerun smells doctor".to_string()]
+        );
+        let steps = next_steps(Path::new("app"), &file, None, &[]);
+        assert_eq!(steps, vec!["smells check --path app".to_string()]);
+        let named = ResolvedPolicy::File(PathBuf::from("my app/smells-policy.json"));
+        assert_eq!(
+            next_steps(Path::new("my app"), &named, Some(&burndown), &[]),
+            vec![
+                "smells check --path 'my app' --policy 'my app/smells-policy.json' --base origin/main"
+                    .to_string()
+            ]
+        );
+
+        let report = DoctorReport {
+            checks: Vec::new(),
+            diagnostics: None,
+            burndown: None,
+            next_steps: steps,
+        };
+        assert!(to_table(&report, false).ends_with("\nNext steps\n  1. smells check --path app\n"));
+        assert_eq!(
+            to_json(&report)["next_steps"],
+            json!(["smells check --path app"])
+        );
     }
 }

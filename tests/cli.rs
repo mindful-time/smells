@@ -1577,6 +1577,7 @@ fn hook_mode_saves_one_indexed_finding_log_and_keeps_stdout_compact() {
     assert!(stdout.contains("Finding Log: smells-findings.log"));
     assert!(stdout.contains("Start at the Issue Index"));
     assert!(!stdout.contains("Actionable finding"));
+    assert!(!stdout.contains("more in the Finding Log"), "{stdout}");
 
     let log = fs::read_to_string(workspace.path.join("smells-findings.log")).unwrap();
     let lines: Vec<_> = log.lines().collect();
@@ -2123,6 +2124,33 @@ fn identical_pinned_inputs_produce_identical_reports() {
 }
 
 #[test]
+fn default_check_summary_names_the_first_blocking_findings() {
+    let long = |name: &str| {
+        format!("pub fn {name}(a:u8,b:u8,c:u8,d:u8,e:u8,f:u8,g:u8,h:u8)->u8{{a+b+c+d+e+f+g+h}}\n")
+    };
+    let workspace = Workspace::new(&["one", "two", "three", "four"].map(long).concat());
+    let output = workspace.command(&["check", "--only-group", "source"]);
+    assert_eq!(output.status.code(), Some(1), "{output:?}");
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let named = stdout
+        .lines()
+        .filter(|line| {
+            line.starts_with("  F")
+                && line.contains(" | blocking | rust.function_arguments | src/lib.rs:")
+        })
+        .count();
+    assert_eq!(named, 3, "{stdout}");
+    assert!(
+        stdout.contains("  +1 more in the Finding Log\n"),
+        "{stdout}"
+    );
+    assert!(
+        stdout.contains("Finding Log: smells-findings.log"),
+        "{stdout}"
+    );
+}
+
+#[test]
 fn staged_scan_ignores_unstaged_source_and_policy() {
     let workspace = Workspace::new("fn f(a:i32,b:i32,c:i32,d:i32,e:i32,f:i32,g:i32,h:i32){} ");
     workspace.git(&["init", "-q"]);
@@ -2135,8 +2163,6 @@ fn staged_scan_ignores_unstaged_source_and_policy() {
     let output = workspace.command(&[
         "check",
         "--staged",
-        "--policy",
-        "quality-policy.json",
         "--only-group",
         "source",
         "--format",
@@ -2165,6 +2191,8 @@ fn unstaged_policy_and_escaping_staged_paths_error() {
             workspace.command(&["check", "--staged", "--policy", path, "--format", "json"]);
         assert_eq!(output.status.code(), Some(2));
     }
+    let output = workspace.command(&["check", "--staged", "--format", "json"]);
+    assert_eq!(output.status.code(), Some(2));
 }
 
 #[test]
@@ -2565,6 +2593,32 @@ fn named_groups_require_distinct_declarations_and_exact_syntax() {
         "type Alias=i32;struct A{x:i32,y:i32,z:i32}struct B{x:Alias,y:Alias,z:Alias}struct C{x:i32,y:i32,z:i32}",
     );
     assert!(!matched(&report(&workspace.check()), "rust.data_clumps"));
+}
+
+#[test]
+fn named_groups_do_not_count_constructors_of_a_supporting_struct() {
+    let pair = "struct A{x:i32,y:i32,z:i32}struct B{x:i32,y:i32,z:i32}";
+    for (constructor, expected) in [
+        ("fn make(x:i32,y:i32,z:i32)->A{A{x,y,z}}", false),
+        ("impl A{fn new(x:i32,y:i32,z:i32)->Self{A{x,y,z}}}", false),
+        (
+            "impl A{fn try_new(x:i32,y:i32,z:i32)->Result<Self,()>{Ok(A{x,y,z})}}",
+            false,
+        ),
+        ("fn make(x:i32,y:i32,z:i32)->Option<A>{None}", false),
+        ("fn make(x:i32,y:i32,z:i32)->i32{x}", true),
+        (
+            "struct C{x:i32,y:i32,z:i32}fn make(x:i32,y:i32,z:i32)->A{A{x,y,z}}",
+            true,
+        ),
+    ] {
+        let workspace = Workspace::new(&format!("{pair}{constructor}"));
+        assert_eq!(
+            matched(&report(&workspace.check()), "rust.data_clumps"),
+            expected,
+            "{constructor}"
+        );
+    }
 }
 
 #[test]
@@ -3302,6 +3356,67 @@ fn duplicate_pair(alpha_prefix: &str, beta_prefix: &str) -> String {
 }
 
 #[test]
+fn git_reference_ratchet_reports_the_added_finding_when_burdens_tie() {
+    let legacy = "pub fn legacy(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32, h: i32) -> i32 { a + b + c + d + e + f + g + h }\n";
+    let workspace = Workspace::new(legacy);
+    init_git_repo(&workspace.path);
+    git_stage_and_commit(&workspace.path, "initial legacy debt");
+
+    // `src/added.rs` sorts before `src/lib.rs`, so a path-order tie-break would
+    // blame the legacy function instead of the one this change adds.
+    fs::write(
+        workspace.path.join("src/added.rs"),
+        "pub fn added(a: u8, b: u8, c: u8, d: u8, e: u8, f: u8, g: u8, h: u8) -> u8 { a ^ b ^ c ^ d ^ e ^ f ^ g ^ h }\n",
+    )
+    .unwrap();
+    assert!(
+        Command::new("git")
+            .args(["add", "-A"])
+            .current_dir(&workspace.path)
+            .status()
+            .unwrap()
+            .success()
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_smells"))
+        .args([
+            "check",
+            "--staged",
+            "--base",
+            "HEAD",
+            "--policy",
+            "quality-policy.json",
+            "--format",
+            "json",
+        ])
+        .current_dir(&workspace.path)
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    let data = report(&output);
+    assert_eq!(data["ratchet"]["regressed_blockers"], 1);
+    let arguments: Vec<_> = data["findings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|finding| finding["rule_id"] == "rust.function_arguments")
+        .map(|finding| {
+            (
+                finding["location"]["path"].as_str().unwrap(),
+                finding["status"].as_str().unwrap(),
+                finding["blocking"].as_bool().unwrap(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        arguments,
+        vec![
+            ("src/added.rs", "violation", true),
+            ("src/lib.rs", "legacy_within_envelope", false),
+        ]
+    );
+}
+
+#[test]
 fn git_reference_ratchet_gates_duplicate_code_by_shared_token_mass() {
     let workspace = Workspace::new(&duplicate_pair("", ""));
     workspace.modify("/rules/rust.duplicate_functions/mode", json!("required"));
@@ -3731,7 +3846,8 @@ fn doctor_reports_governance_gaps_as_warnings_on_a_complete_repository() {
     git_stage_and_commit(&workspace.path, "initial");
     let (code, data) = doctor(&workspace, &[]);
     assert_eq!(code, Some(0), "{data}");
-    assert_eq!(data["status"], "healthy");
+    assert_eq!(data["status"], "checks_passed");
+    assert_eq!(data["next_steps"], json!(["smells check"]), "{data}");
     assert_eq!(doctor_check(&data, "policy")["status"], "ok");
     assert_eq!(doctor_check(&data, "git_history")["status"], "ok");
     assert_eq!(doctor_check(&data, "suppressions")["status"], "ok");
@@ -3770,7 +3886,8 @@ fn doctor_fails_closed_on_missing_history_invalid_policy_and_bad_arguments() {
     let workspace = Workspace::new("pub fn value() -> u8 { 1 }\n");
     let (code, data) = doctor(&workspace, &[]);
     assert_eq!(code, Some(2));
-    assert_eq!(data["status"], "unhealthy");
+    assert_eq!(data["status"], "checks_failed");
+    assert_eq!(data["next_steps"], json!([]), "{data}");
     assert_eq!(doctor_check(&data, "git_history")["status"], "error");
 
     workspace.modify("/scanner_version", json!("0.0.0"));
@@ -3875,7 +3992,7 @@ fn doctor_reports_compact_smell_diagnostics_and_fails_closed_on_scan_errors() {
 
     let (code, data) = doctor(&workspace, &[]);
     assert_eq!(code, Some(0), "{data}");
-    assert_eq!(data["status"], "healthy");
+    assert_eq!(data["status"], "checks_passed");
     assert_eq!(data["diagnostics"]["scanned_files"], 1);
     assert_eq!(data["diagnostics"]["blocking_findings"], 1);
     assert!(data["diagnostics"]["review_signals"].as_u64().unwrap() >= 1);
@@ -3962,9 +4079,18 @@ fn doctor_reports_compact_smell_diagnostics_and_fails_closed_on_scan_errors() {
     workspace.source("src/lib.rs", "pub fn broken( {\n");
     let (code, data) = doctor(&workspace, &[]);
     assert_eq!(code, Some(2), "{data}");
-    assert_eq!(data["status"], "unhealthy");
+    assert_eq!(data["status"], "checks_failed");
     assert_eq!(doctor_check(&data, "scan")["status"], "error");
     assert_eq!(data["diagnostics"]["grade"], "Incomplete", "{data}");
+    let steps = data["next_steps"].as_array().unwrap();
+    assert_eq!(steps.len(), 1, "{data}");
+    assert!(
+        steps[0]
+            .as_str()
+            .unwrap()
+            .starts_with("fix the errors above"),
+        "{data}"
+    );
 
     // A base commit with a parser error also fails closed with exit 2.
     git_stage_and_commit(&workspace.path, "broken base");
@@ -4150,6 +4276,29 @@ fn coverage_replaces_estimated_crap_and_rejects_stale_artifacts() {
         json!({"numerator": 58, "denominator": 27})
     );
     assert!(!matched(&measured, "rust.function_crap"));
+    let found = check(&[]);
+    assert_eq!(found.status.code(), Some(0));
+    assert!(
+        String::from_utf8_lossy(&found.stderr).contains(
+            "smells: reading coverage from ./coverage/lcov.info (found automatically; pass --coverage FILE to choose another)"
+        ),
+        "{found:?}"
+    );
+    let crap = finding(&report(&found), "rust.function_crap", "::pick").clone();
+    assert_eq!(
+        crap["evaluation"]["observed"],
+        json!({"numerator": 58, "denominator": 27}),
+        "check finds coverage without --coverage"
+    );
+    let based = check(&["--base", "HEAD"]);
+    assert_eq!(based.status.code(), Some(0), "{based:?}");
+    assert!(based.stderr.is_empty(), "{based:?}");
+    let crap = finding(&report(&based), "rust.function_crap", "::pick").clone();
+    assert_eq!(
+        crap["evaluation"]["observed"],
+        json!({"numerator": 6, "denominator": 1}),
+        "--base scans skip discovered coverage the reference cannot match"
+    );
     let (code, data) = doctor(&workspace, &[]);
     assert_eq!(code, Some(0), "{data}");
     let coverage = doctor_check(&data, "coverage");

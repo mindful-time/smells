@@ -12,6 +12,37 @@ Repository implementations are discovered from the nearest ancestor `Cargo.toml`
 
 `maximum_pairs` is a deterministic resource ceiling, not the theoretical number of all callable pairs. Rust, Python, and TypeScript first apply exact multiset-Jaccard minimum-token, size, prefix, and positional filters, then charge one unit for each remaining unique pair whose full similarity is evaluated. Large full-codebase policies can use a larger explicit budget than staged/pre-commit policies; exhaustion identifies the affected rule plus the charged and configured counts, and always returns exit 2 rather than a truncated success.
 
+## Tests and migrations (`source_roles`)
+
+Instead of excluding test suites or migration directories and losing visibility, declare `source_roles` in `quality-policy.json`:
+
+```json
+"source_roles": [
+  {
+    "role": "test_suite",
+    "framework": "pytest",
+    "paths": ["/tests/**/*.py"]
+  },
+  {
+    "role": "database_migration",
+    "framework": "alembic",
+    "paths": ["/backend/alembic/versions/**/*.py"],
+    "configuration": ["/backend/alembic.ini"]
+  }
+]
+```
+
+- **Test suites** (`pytest`, `unittest`, `vitest`, `jest`, `playwright`, `cargo_test`): long canonical test cases and blocks (`test_*`, `describe`/`it`/`test`, `#[test]`) become visible non-blocking `reported_by_role` review signals, while test helpers and all other rules stay enforced.
+- **Database migrations** (Alembic, Django, TypeORM, MikroORM, Kysely, Knex, Sequelize/Umzug, Prisma, Drizzle, SeaORM, SQLx, Diesel, Refinery): canonical migration entrypoints stay measured as non-blocking review signals and SQL bodies are inventoried explicitly. See [migration code analysis](migration-code-analysis.md).
+
+## Measured CRAP scores (`--coverage`)
+
+Pass `--coverage lcov.info` (any LCOV file from `cargo llvm-cov`, `pytest --cov`, or `vitest --coverage`) to score CRAP from real line coverage. Starter policies score CRAP in bands: 5 or less is fine, 6 to 10 is a non-blocking warning, and above 10 blocks. Only a score measured from coverage can block; without coverage, scores assume 0% coverage and stay warnings. `smells doctor` finds `lcov.info`, `coverage/lcov.info`, or `target/llvm-cov/lcov.info` automatically and, without one, hides those 0%-coverage estimates. `smells check` finds the same files for a working-tree scan without `--base`; staged and `--base` scans read coverage only from `--coverage`, because the ratchet reference has no coverage to compare against.
+
+When no file is found and you run `doctor` or `check` at a terminal, smells offers to measure coverage. It shows the exact commands first: an install step if the tool is missing (`cargo-llvm-cov`, `pytest-cov`, or `@vitest/coverage-v8` at your installed vitest version), then the test run (`cargo llvm-cov`, `pytest --cov`, `vitest run --coverage` or `jest --coverage`, through `uv` or your lockfile's package manager). Nothing runs unless you answer `y`. A spinner shows progress, test output goes to a log file, and a failed run leaves the scan on its 0%-coverage estimates. The policy's language picks the tool, so a Rust crate packaged for Python with maturin gets `cargo llvm-cov`; manifests decide only when no policy can be read. The offer never appears when `CI` is set, with `--format json`, or when stdin or stderr is not a terminal.
+
+With coverage, CRAP scores in files the LCOV omits stay 0%-coverage estimates. `check` reports them; doctor hides them and counts them in its `coverage` check. `cargo llvm-cov` does not report Rust integration tests under `tests/` as covered sources, so their functions are the usual case.
+
 ## Commands
 
 ```text
@@ -20,7 +51,7 @@ smells rules [--rule-pack rust-v1|python-v1|typescript-v1]
 smells contracts validate [--policy FILE]
 smells doctor [--policy FILE] [--path DIRECTORY] [--base REF] [--format table|json]
 smells policy show [--policy FILE] [--format table|json] [group selectors]
-smells check --path DIRECTORY [--policy FILE] [--base REF] [--evidence FILE] [--format table|json] [--report JSON] [--log LOG] [group selectors]
+smells check [--path DIRECTORY] [--policy FILE] [--base REF] [--evidence FILE] [--format table|json] [--report JSON] [--log LOG] [group selectors]
 smells check --staged [--policy FILE] [--base REF] [--evidence FILE] [--format table|json] [--report JSON] [--log LOG] [group selectors]
 ```
 
@@ -33,7 +64,7 @@ the five canonical Refactoring.Guru categories. Unknown, duplicate, or
 conflicting selectors fail closed. `policy show` exposes the exact resolved rule
 set before a scan.
 
-- Exactly one of --path and --staged is required for a source check. Worktree policy paths are caller-relative or absolute; the policy is a separate captured input. Validation checks policy structure, not source or detector readiness. Its successful status is valid_contracts, not a smell-scan pass.
+- `check` scans `--path .` unless `--path` or `--staged` is given; combining `--path` and `--staged` exits 2. Without `--policy`, `check` reads `quality-policy.json` from the scanned root; when it is missing, the scan exits 2 and prints the exact `curl` command for the matching starter policy. Without `--log` and `--format`, `check` prints a short summary and writes the complete Finding Log to `smells-findings.log`; `--format table` prints every finding instead. Every command accepts `--help`. Worktree policy paths are caller-relative or absolute; the policy is a separate captured input. Validation checks policy structure, not source or detector readiness. Its successful status is valid_contracts, not a smell-scan pass.
 - --path recursively captures the selected pack's extensions (`.rs`; `.py`/`.pyi`; or `.ts`/`.tsx`/`.mts`/`.cts`), the fixed runtime manifests used for implementation ownership, and recognized SQL migration artifacts. Recognized artifact bytes count toward the file budget and input digest even though their bodies are inventoried rather than analyzed. It excludes configured directory names and never follows symlinks. A symlink whose path has a selected source extension, recognized SQL artifact, or runtime-manifest name is rejected; other symlinks are skipped because they cannot enter that language corpus. It errors on unreadable/empty source input. Worktree capture is not an atomic filesystem transaction; its report refers to the captured bytes, not an unstaged commit guarantee.
 - --staged operates on the current Git repository's root. Its policy path is root-relative, without absolute, dot or escaping components. It reads source, runtime manifests, recognized SQL migration artifacts, and policy directly from regular staged blobs, not from the working tree. Artifact bytes participate in the staged file budget and input digest. It checks the index listing before/after capture and rejects concurrent index changes, unmerged entries, symlink source/policy/manifest/artifact and absent staged policy. Submodule contents are not traversed as part of the superproject's source corpus.
 - Both source modes emit report schema v11 with resolved `policy_selection`, source-role, migration-artifact, and unresolved-candidate inventories, exact migration declaration provenance, migration integrity metadata, input/provider/implementation digests, bounded `history_scope`, repository-relative `implementation_results`, 23 smell results, 23 immutable `when_to_ignore` records, compact measurements, matched findings, and suppression audit records. Findings reference guidance once by `guidance_ref`. Hooks route from the Finding Log Issue Index to exact 1-based source locations, and use normalized JSON for programmatic evidence access.
@@ -79,7 +110,7 @@ The example hook is not installed. A consuming project must validate the actual 
 
 Hook stdout names both artifacts and tells the agent to start at the Finding Log Issue Index. The agent must then read every referenced error, blocking, ignored, and review detail. Each finding supplies all locations, exact policy evaluation, why it matched, rule/version, URL, resolved `when_to_ignore`, and exact suppression form. Before review, remediation, or suppression, the agent must open and read the exact Refactoring.Guru URL, then inspect the declaration, callers, and tests. If research is unavailable, it must report that fact and stop those actions. It may never add a suppression merely to make the hook pass.
 
-The quality runner continues to own security scans, compilation/lints, application tests, fresh coverage and any future evidence production. The scanner never executes a consuming project's build scripts or tests. The source scanner is not a substitute for those checks.
+The quality runner continues to own security scans, compilation/lints, application tests, fresh coverage and any future evidence production. The scanner never executes a consuming project's build scripts or tests, except a coverage run a person accepts at the interactive prompt. The source scanner is not a substitute for those checks.
 
 ## Live reference E2E
 

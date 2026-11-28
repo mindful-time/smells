@@ -14,6 +14,7 @@ mod evidence_evaluators;
 mod input;
 mod metrics;
 mod migration;
+mod names;
 mod patterns;
 mod policy;
 mod portable;
@@ -21,6 +22,7 @@ mod report;
 mod rule_runtime;
 mod scan;
 mod similarity;
+mod suppression_markers;
 mod suppressions;
 mod typescript_compat;
 
